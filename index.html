@@ -649,6 +649,24 @@
       margin: 10px 0;
     }
 
+    .setup.online .name-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .setup.online #name2,
+    .setup.online #name3,
+    .setup.online #name4 {
+      display: none;
+    }
+
+    .online-only {
+      display: none;
+    }
+
+    .setup.online .online-only {
+      display: block;
+    }
+
     .diff-label {
       color: var(--muted);
       font-weight: 900;
@@ -752,6 +770,45 @@
       color: var(--muted);
       font-size: 0.78rem;
       line-height: 1.2;
+      font-weight: 850;
+    }
+
+    .gender-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin: 0 0 12px;
+    }
+
+    .gender-btn {
+      min-height: 38px;
+      border-radius: 8px;
+      border: 2px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    .gender-btn.active {
+      border-color: transparent;
+      background: linear-gradient(180deg, #fff6c7, #ffc84e);
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.14);
+    }
+
+    .lobby-list {
+      display: grid;
+      gap: 5px;
+      min-height: 30px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.68);
+      color: var(--ink);
+      font-weight: 900;
+      font-size: 0.84rem;
+    }
+
+    .lobby-list span {
+      color: var(--muted);
       font-weight: 850;
     }
 
@@ -979,12 +1036,20 @@
   <section id="setup" class="setup">
     <div class="card">
       <h2>Start</h2>
-      <p>2 bis 4 Spieler. Das Rad zeigt Konsonanten; Vokale werden gekauft.</p>
+      <p>2 bis 4 Spieler. Online erstellt ein Spieler den Raum, die anderen treten mit Code bei.</p>
       <div class="name-grid">
-        <input id="name1" value="Anna" maxlength="12" aria-label="Spieler 1">
-        <input id="name2" value="Ben" maxlength="12" aria-label="Spieler 2">
+        <input id="name1" placeholder="Spieler 1" maxlength="12" aria-label="Spieler 1">
+        <input id="name2" placeholder="Spieler 2" maxlength="12" aria-label="Spieler 2">
         <input id="name3" placeholder="Spieler 3" maxlength="12" aria-label="Spieler 3">
         <input id="name4" placeholder="Spieler 4" maxlength="12" aria-label="Spieler 4">
+      </div>
+      <div class="online-only">
+        <div class="diff-label">Geschlecht optional</div>
+        <div class="gender-row" id="genderRow">
+          <button type="button" class="gender-btn active" data-gender="">Keine Angabe</button>
+          <button type="button" class="gender-btn" data-gender="weiblich">Weiblich</button>
+          <button type="button" class="gender-btn" data-gender="maennlich">Maennlich</button>
+        </div>
       </div>
       <div class="diff-label">Schwierigkeit</div>
       <div class="diff-row" id="difficultyRow">
@@ -1004,6 +1069,7 @@
           <input id="joinCodeInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Code vom Mitspieler" aria-label="Spiel-Code eingeben">
           <button id="joinRoomBtn" type="button" class="mini-btn">Beitreten</button>
         </div>
+        <div id="lobbyPlayers" class="lobby-list"><span>Noch kein Spieler im Raum.</span></div>
         <div id="networkStatus" class="connection-status">Waehle Code erstellen oder gib den Code vom anderen Spieler ein.</div>
       </div>
       <button id="startBtn" class="btn primary">Spiel starten</button>
@@ -1324,6 +1390,8 @@
       connected: false,
       role: "local",
       roomReady: false,
+      lobbyPlayers: [],
+      gender: "",
       applyingSnapshot: false
     };
 
@@ -1366,6 +1434,50 @@
       if (status) status.textContent = text;
     }
 
+    function getPlayerProfile() {
+      const name = $("name1").value.trim();
+      return {
+        name,
+        gender: network.gender || ""
+      };
+    }
+
+    function requireOnlineName() {
+      if (!isOnlineMode()) return true;
+      if ($("name1").value.trim()) return true;
+      setNetworkStatus("Bitte zuerst deinen Namen eingeben.");
+      $("name1").focus();
+      return false;
+    }
+
+    function renderLobby(players = network.lobbyPlayers) {
+      network.lobbyPlayers = Array.isArray(players) ? players : [];
+      const list = $("lobbyPlayers");
+      if (!list) return;
+      list.innerHTML = "";
+      if (!network.lobbyPlayers.length) {
+        const empty = document.createElement("span");
+        empty.textContent = "Noch kein Spieler im Raum.";
+        list.appendChild(empty);
+        return;
+      }
+      network.lobbyPlayers.forEach((player, index) => {
+        const item = document.createElement("div");
+        const gender = player.gender ? ` (${player.gender})` : "";
+        item.textContent = `${index + 1}. ${player.name}${gender}`;
+        list.appendChild(item);
+      });
+    }
+
+    function updateSetupModeUi() {
+      $("setup").classList.toggle("online", isOnlineMode());
+      $("name1").placeholder = isOnlineMode() ? "Dein Name" : "Spieler 1";
+      if (!isOnlineMode()) {
+        network.lobbyPlayers = [];
+        renderLobby([]);
+      }
+    }
+
     function connectNetwork() {
       if (!isOnlineMode()) return Promise.resolve(false);
       if (typeof io !== "function") {
@@ -1386,6 +1498,14 @@
         network.socket.on("state-updated", (snapshot) => {
           applySnapshot(snapshot);
         });
+        network.socket.on("lobby-updated", (players) => {
+          renderLobby(players);
+          if (isOnlineMode() && network.role === "host") {
+            setNetworkStatus(players.length >= 2
+              ? "Mitspieler verbunden. Du kannst das Spiel starten."
+              : "Raum erstellt. Warte auf weitere Spieler.");
+          }
+        });
       }
       return new Promise((resolve) => {
         const done = () => resolve(true);
@@ -1402,11 +1522,12 @@
     function createOnlineRoom() {
       return connectNetwork().then((connected) => new Promise((resolve) => {
         if (!connected) return resolve(false);
-        if (network.roomReady && network.role === "host") return resolve(true);
+        if (!requireOnlineName()) return resolve(false);
         ensureRoomCode();
         network.socket.emit("create-room", {
           code: state.roomCode,
-          mode: state.playMode
+          mode: state.playMode,
+          player: getPlayerProfile()
         }, (reply = {}) => {
           if (!reply.ok) {
             setNetworkStatus(reply.error || "Raum konnte nicht erstellt werden.");
@@ -1417,7 +1538,8 @@
           network.roomReady = true;
           $("setupRoomCode").textContent = state.roomCode;
           $("joinCodeInput").value = state.roomCode;
-          setNetworkStatus(`${connectionShortLabel()}-Raum erstellt. Zweiter Spieler gibt diesen Code ein.`);
+          renderLobby(reply.players || []);
+          setNetworkStatus(`${connectionShortLabel()}-Raum erstellt. Warte auf weitere Spieler.`);
           resolve(true);
         });
       }));
@@ -1426,6 +1548,7 @@
     function joinOnlineRoom() {
       return connectNetwork().then((connected) => new Promise((resolve) => {
         if (!connected) return resolve(false);
+        if (!requireOnlineName()) return resolve(false);
         syncJoinCode();
         if (!state.roomCode) {
           setNetworkStatus("Bitte zuerst den Code vom anderen Spieler eingeben.");
@@ -1433,7 +1556,8 @@
         }
         network.socket.emit("join-room", {
           code: state.roomCode,
-          mode: state.playMode
+          mode: state.playMode,
+          player: getPlayerProfile()
         }, (reply = {}) => {
           if (!reply.ok) {
             setNetworkStatus(reply.error || "Raum nicht gefunden.");
@@ -1443,6 +1567,7 @@
           network.roomReady = true;
           $("setupRoomCode").textContent = state.roomCode;
           $("roomCode").textContent = `${connectionShortLabel()} ${state.roomCode}`;
+          renderLobby(reply.players || []);
           setNetworkStatus(reply.snapshot ? "Verbunden. Spielstand wurde geladen." : "Verbunden. Warte, bis der erste Spieler startet.");
           if (reply.snapshot) applySnapshot(reply.snapshot);
           resolve(true);
@@ -1546,7 +1671,9 @@
     }
 
     async function startGame() {
+      let names = [];
       if (isOnlineMode()) {
+        if (!requireOnlineName()) return;
         syncJoinCode();
         if (network.role !== "host") {
           await joinOnlineRoom();
@@ -1554,15 +1681,27 @@
         }
         const roomReady = await createOnlineRoom();
         if (!roomReady) return;
+        names = network.lobbyPlayers.map((player) => player.name).filter(Boolean);
+        if (names.length < 2) {
+          setNetworkStatus("Bitte warten, bis mindestens ein Mitspieler beigetreten ist.");
+          return;
+        }
+      } else {
+        names = [1, 2, 3, 4]
+          .map((n) => $(`name${n}`).value.trim())
+          .filter(Boolean);
       }
-      const names = [1, 2, 3, 4]
-        .map((n) => $(`name${n}`).value.trim())
-        .filter(Boolean);
       if (names.length < 2) {
         alert("Bitte mindestens zwei Spieler eintragen.");
         return;
       }
-      state.players = names.map((name) => ({ name, score: 30, buys: 0, jokerUsed: false }));
+      state.players = names.map((name, index) => ({
+        name,
+        gender: isOnlineMode() ? (network.lobbyPlayers[index]?.gender || "") : "",
+        score: 30,
+        buys: 0,
+        jokerUsed: false
+      }));
       state.active = 0;
       state.puzzleBag = [];
       applyDifficultyDial();
@@ -2237,7 +2376,26 @@
       network.roomReady = false;
       $("joinCodeInput").maxLength = roomCodeLength();
       document.querySelectorAll(".mode-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      updateSetupModeUi();
       updateNetworkSettings();
+    });
+
+    $("genderRow").addEventListener("click", (event) => {
+      const btn = event.target.closest(".gender-btn");
+      if (!btn) return;
+      network.gender = btn.dataset.gender || "";
+      document.querySelectorAll(".gender-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      if (isOnlineMode() && network.roomReady) {
+        if (network.role === "host") createOnlineRoom();
+        if (network.role === "guest") joinOnlineRoom();
+      }
+    });
+
+    $("name1").addEventListener("input", () => {
+      if (isOnlineMode() && network.roomReady) {
+        if (network.role === "host") createOnlineRoom();
+        if (network.role === "guest") joinOnlineRoom();
+      }
     });
 
     $("createRoomBtn").addEventListener("click", async () => {
@@ -2296,6 +2454,7 @@
     });
 
     setupWheel();
+    updateSetupModeUi();
     updateNetworkSettings();
     renderAll();
   </script>

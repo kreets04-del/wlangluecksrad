@@ -59,14 +59,16 @@ https://wlan-gluecksrad.onrender.com
 ## 4. Online spielen
 
 1. Spieler 1 oeffnet die Render-Adresse.
-2. Spieler 1 waehlt in den Einstellungen `Online mit Code`.
-3. Spieler 1 klickt auf `Raum erstellen`.
-4. Spieler 1 nennt Spieler 2 den Code.
-5. Spieler 2 oeffnet dieselbe Render-Adresse.
-6. Spieler 2 waehlt `Online mit Code`.
-7. Spieler 2 gibt den Code ein.
-8. Spieler 1 traegt die Spielernamen ein und startet das Spiel.
-9. Spieler 2 klickt nach Eingabe des Codes auf `Beitreten`.
+2. Spieler 1 waehlt `Online mit Code`.
+3. Spieler 1 gibt seinen Namen ein und waehlt optional ein Geschlecht.
+4. Spieler 1 klickt auf `Raum erstellen`.
+5. Der Code wird angezeigt.
+6. Spieler 2 oeffnet dieselbe Render-Adresse.
+7. Spieler 2 waehlt `Online mit Code`.
+8. Spieler 2 gibt seinen Namen ein und waehlt optional ein Geschlecht.
+9. Spieler 2 gibt den Code ein und klickt auf `Beitreten`.
+10. Spieler 1 sieht die verbundenen Spieler in der Warteliste.
+11. Sobald mindestens zwei Spieler im Raum sind, klickt Spieler 1 auf `Spiel starten`.
 
 ## Hinweise zum Free Plan
 

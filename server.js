@@ -29,11 +29,40 @@ function touchRoom(room) {
   room.updatedAt = Date.now();
 }
 
+function playerFrom(socket, payload = {}) {
+  const rawName = String(payload.player?.name || "Spieler").trim().slice(0, 12);
+  const gender = String(payload.player?.gender || "").trim().slice(0, 12);
+  return {
+    id: socket.id,
+    name: rawName || "Spieler",
+    gender
+  };
+}
+
+function upsertPlayer(room, socket, payload) {
+  const player = playerFrom(socket, payload);
+  const existing = room.players.findIndex((item) => item.id === socket.id);
+  if (existing >= 0) {
+    room.players[existing] = player;
+  } else if (room.players.length < 4) {
+    room.players.push(player);
+  }
+  return player;
+}
+
+function publicPlayers(room) {
+  return room.players.map((player) => ({
+    name: player.name,
+    gender: player.gender
+  }));
+}
+
 function roomInfo(room, socketId) {
   return {
     ok: true,
     code: room.code,
     role: room.hostId === socketId ? "host" : "guest",
+    players: publicPlayers(room),
     snapshot: room.snapshot || null
   };
 }
@@ -57,16 +86,19 @@ io.on("connection", (socket) => {
       mode: "online",
       hostId: socket.id,
       sockets: new Set(),
+      players: [],
       snapshot: null,
       updatedAt: Date.now()
     };
 
     room.hostId = socket.id;
     room.sockets.add(socket.id);
+    upsertPlayer(room, socket, payload);
     touchRoom(room);
     rooms.set(code, room);
     socket.join(code);
     socket.data.roomCode = code;
+    io.to(code).emit("lobby-updated", publicPlayers(room));
     reply?.(roomInfo(room, socket.id));
   });
 
@@ -79,9 +111,11 @@ io.on("connection", (socket) => {
     }
 
     room.sockets.add(socket.id);
+    upsertPlayer(room, socket, payload);
     touchRoom(room);
     socket.join(code);
     socket.data.roomCode = code;
+    io.to(code).emit("lobby-updated", publicPlayers(room));
     reply?.(roomInfo(room, socket.id));
   });
 
