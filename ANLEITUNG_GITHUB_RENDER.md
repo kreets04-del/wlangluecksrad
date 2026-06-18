@@ -59,14 +59,14 @@ https://wlan-gluecksrad.onrender.com
 ## 4. Online spielen
 
 1. Spieler 1 oeffnet die Render-Adresse.
-2. Spieler 1 waehlt in den Einstellungen `Mensch gegen Mensch WLAN Code` oder `Mensch gegen Mensch Mobile Daten`.
-3. Spieler 1 klickt auf `Code erstellen`.
+2. Spieler 1 waehlt in den Einstellungen `Online mit Code`.
+3. Spieler 1 klickt auf `Raum erstellen`.
 4. Spieler 1 nennt Spieler 2 den Code.
 5. Spieler 2 oeffnet dieselbe Render-Adresse.
-6. Spieler 2 waehlt dieselbe Spielart.
+6. Spieler 2 waehlt `Online mit Code`.
 7. Spieler 2 gibt den Code ein.
 8. Spieler 1 traegt die Spielernamen ein und startet das Spiel.
-9. Spieler 2 klickt nach Eingabe des Codes auf `Spiel starten`, um dem Raum beizutreten.
+9. Spieler 2 klickt nach Eingabe des Codes auf `Beitreten`.
 
 ## Hinweise zum Free Plan
 

@@ -665,7 +665,7 @@
 
     .mode-row {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 6px;
       margin-bottom: 10px;
     }
@@ -732,12 +732,13 @@
 
     .network-actions {
       display: grid;
-      grid-template-columns: minmax(120px, 0.9fr) minmax(0, 1fr);
+      grid-template-columns: minmax(120px, 0.9fr) minmax(0, 1fr) minmax(120px, 0.9fr);
       gap: 7px;
     }
 
     .mini-btn {
       min-height: 42px;
+      padding: 0 8px;
       border-radius: 8px;
       background: linear-gradient(180deg, #fff6c7, #ffc84e);
       color: var(--ink);
@@ -994,14 +995,14 @@
       <div class="diff-label">Spielart</div>
       <div class="mode-row" id="playModeRow">
         <button type="button" class="diff-btn mode-btn active" data-mode="local">An einem Geraet</button>
-        <button type="button" class="diff-btn mode-btn" data-mode="wlan">Mensch gegen Mensch WLAN Code</button>
-        <button type="button" class="diff-btn mode-btn" data-mode="mobile">Mensch gegen Mensch Mobile Daten</button>
+        <button type="button" class="diff-btn mode-btn" data-mode="online">Online mit Code</button>
       </div>
       <div id="networkSettings" class="network-settings">
-        <div class="connection-code">Spiel-Code <span id="setupRoomCode">----</span></div>
+        <div class="connection-code">Dein Code <span id="setupRoomCode">----</span></div>
         <div class="network-actions">
-          <button id="createRoomBtn" type="button" class="mini-btn">Code erstellen</button>
-          <input id="joinCodeInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Code eingeben" aria-label="Spiel-Code eingeben">
+          <button id="createRoomBtn" type="button" class="mini-btn">Raum erstellen</button>
+          <input id="joinCodeInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Code vom Mitspieler" aria-label="Spiel-Code eingeben">
+          <button id="joinRoomBtn" type="button" class="mini-btn">Beitreten</button>
         </div>
         <div id="networkStatus" class="connection-status">Waehle Code erstellen oder gib den Code vom anderen Spieler ein.</div>
       </div>
@@ -1357,7 +1358,7 @@
     }
 
     function isOnlineMode() {
-      return state.playMode === "wlan" || state.playMode === "mobile";
+      return state.playMode === "online";
     }
 
     function setNetworkStatus(text) {
@@ -1579,11 +1580,11 @@
     }
 
     function connectionShortLabel() {
-      return state.playMode === "mobile" ? "Mobil" : "WLAN";
+      return "Online";
     }
 
     function roomCodeLength() {
-      return state.playMode === "mobile" ? 6 : 4;
+      return 4;
     }
 
     function makeRoomCode() {
@@ -1619,19 +1620,21 @@
         $("setupRoomCode").textContent = "----";
         $("joinCodeInput").value = "";
         status.textContent = "Lokales Spiel an einem Geraet.";
+        $("startBtn").textContent = "Spiel starten";
         return;
       }
       networkSettings.classList.add("open");
-      const label = state.playMode === "mobile" ? "Mobile-Daten-Code" : "WLAN-Code";
+      const label = "Online-Code";
       if (state.roomCode) {
         $("setupRoomCode").textContent = state.roomCode;
         $("joinCodeInput").value = state.roomCode;
-        status.textContent = `${label} bereit. Der zweite Spieler gibt diesen Code in seinen Einstellungen ein.`;
+        status.textContent = `${label} bereit. Mitspieler oeffnet dieselbe Seite und gibt diesen Code ein.`;
       } else {
         $("setupRoomCode").textContent = "----";
         $("joinCodeInput").value = "";
-        status.textContent = `${label}: Code erstellen oder Code vom anderen Spieler eingeben.`;
+        status.textContent = `${label}: Code erstellen oder Code vom Mitspieler eingeben.`;
       }
+      $("startBtn").textContent = network.role === "guest" ? "Beitreten" : "Spiel starten";
     }
 
     // Schwierigkeitsgrade: welche Kategorien je Altersstufe vorkommen (kumulativ aufgebaut).
@@ -2244,18 +2247,26 @@
       $("joinCodeInput").value = state.roomCode;
       network.role = "host";
       setNetworkStatus(`${connectionShortLabel()}-Code wird erstellt ...`);
+      $("startBtn").textContent = "Spiel starten";
       await createOnlineRoom();
     });
 
     $("joinCodeInput").addEventListener("input", () => {
       network.role = "guest";
       network.roomReady = false;
+      $("startBtn").textContent = "Beitreten";
       syncJoinCode();
       const needed = roomCodeLength();
       const current = $("joinCodeInput").value.length;
       $("networkStatus").textContent = current === needed
         ? `${connectionShortLabel()}-Code uebernommen.`
         : `Noch ${needed - current} Ziffern eingeben.`;
+    });
+
+    $("joinRoomBtn").addEventListener("click", async () => {
+      network.role = "guest";
+      $("startBtn").textContent = "Beitreten";
+      await joinOnlineRoom();
     });
 
     $("jokerBtn").addEventListener("click", useJoker);

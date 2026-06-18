@@ -54,7 +54,7 @@ io.on("connection", (socket) => {
 
     const room = existing || {
       code,
-      mode: payload.mode === "mobile" ? "mobile" : "wlan",
+      mode: "online",
       hostId: socket.id,
       sockets: new Set(),
       snapshot: null,
