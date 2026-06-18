@@ -683,6 +683,13 @@
       margin-bottom: 12px;
     }
 
+    .round-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
     .mode-row {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -708,6 +715,10 @@
       border-color: transparent;
       background: linear-gradient(180deg, #8ef5e1, #25c2ad);
       box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.16);
+    }
+
+    .round-btn {
+      min-height: 38px;
     }
 
     .mode-btn {
@@ -1038,7 +1049,7 @@
   <section id="setup" class="setup">
     <div class="card">
       <h2>Start</h2>
-      <p>2 bis 4 Spieler. Online erstellt ein Spieler den Raum, die anderen treten mit Code bei.</p>
+      <p>2 bis 4 Spieler. Die letzte Runde ist eine Finalrunde mit doppelten Punkten.</p>
       <div class="name-grid">
         <input id="name1" placeholder="Spieler 1" maxlength="12" aria-label="Spieler 1">
         <input id="name2" placeholder="Spieler 2" maxlength="12" aria-label="Spieler 2">
@@ -1058,6 +1069,13 @@
         <button type="button" class="diff-btn" data-diff="kinder">Kinder</button>
         <button type="button" class="diff-btn" data-diff="jugend">Jugendliche</button>
         <button type="button" class="diff-btn active" data-diff="erwachsen">Erwachsene</button>
+      </div>
+      <div class="diff-label">Runden</div>
+      <div class="round-row" id="roundRow">
+        <button type="button" class="diff-btn round-btn" data-rounds="3">3</button>
+        <button type="button" class="diff-btn round-btn active" data-rounds="5">5</button>
+        <button type="button" class="diff-btn round-btn" data-rounds="7">7</button>
+        <button type="button" class="diff-btn round-btn" data-rounds="10">10</button>
       </div>
       <div class="diff-label">Spielart</div>
       <div class="mode-row" id="playModeRow">
@@ -1261,6 +1279,10 @@
       { category: "Essen & Trinken", solution: "FRISCHE ERDBEEREN MIT VANILLEEIS" },
       { category: "Essen & Trinken", solution: "CURRYWURST MIT POMMES ROT WEISS" },
       { category: "Essen & Trinken", solution: "HAUSGEMACHTE MARMELADE AUFS FRUEHSTUECKSBROT" },
+      { category: "Essen & Trinken", solution: "PFANNKUCHEN MIT APFELMUS" },
+      { category: "Essen & Trinken", solution: "PIZZAABEND MIT FREUNDEN" },
+      { category: "Essen & Trinken", solution: "BUNTER SALAT AUS DEM GARTEN" },
+      { category: "Essen & Trinken", solution: "EIS AM STIEL IN DER SONNE" },
       // Alltag
       { category: "Alltag", solution: "DER SCHLUESSEL LIEGT IM KUEHLSCHRANK" },
       { category: "Alltag", solution: "DIE FERNBEDIENUNG IST VERSCHWUNDEN" },
@@ -1272,6 +1294,10 @@
       { category: "Alltag", solution: "DER EINKAUFZETTEL LIEGT NOCH ZU HAUSE" },
       { category: "Alltag", solution: "DIE SOCKEN VERSCHWINDEN IN DER WASCHMASCHINE" },
       { category: "Alltag", solution: "ERST KAFFEE DANN KANN DER TAG BEGINNEN" },
+      { category: "Alltag", solution: "DAS HANDY LIEGT AUF DEM NACHTTISCH" },
+      { category: "Alltag", solution: "DER BUS KOMMT ZWEI MINUTEN ZU SPAET" },
+      { category: "Alltag", solution: "DIE TASCHE IST SCHNELL GEPACKT" },
+      { category: "Alltag", solution: "NOCH EINMAL DURCH DIE WOHNUNG FLITZEN" },
       // Märchen
       { category: "Märchen", solution: "HAENSEL UND GRETEL VERLAUFEN SICH IM WALD" },
       { category: "Märchen", solution: "ROTKAEPPCHEN BESUCHT DIE GROSSMUTTER" },
@@ -1298,6 +1324,10 @@
       { category: "Sport", solution: "EIN SPRUNG VOM DREIMETERBRETT" },
       { category: "Sport", solution: "DER PERFEKTE AUFSCHLAG BEIM TENNIS" },
       { category: "Sport", solution: "EIN AUSRITT BEI SONNENUNTERGANG" },
+      { category: "Sport", solution: "DIE LETZTE RUNDE AUF DER LAUFBAHN" },
+      { category: "Sport", solution: "DER TORWART HAELT DEN BALL" },
+      { category: "Sport", solution: "EIN KORB IN LETZTER SEKUNDE" },
+      { category: "Sport", solution: "AUFWAERMEN VOR DEM TRAINING" },
       // Spiel & Spaß
       { category: "Spiel & Spaß", solution: "EINE RUNDE STADT LAND FLUSS" },
       { category: "Spiel & Spaß", solution: "MENSCH AERGERE DICH NICHT" },
@@ -1307,6 +1337,10 @@
       { category: "Spiel & Spaß", solution: "DER LETZTE BUCHSTABE ENTSCHEIDET" },
       { category: "Spiel & Spaß", solution: "NOCH EINMAL DREHEN UND HOFFEN" },
       { category: "Spiel & Spaß", solution: "ALLES ODER NICHTS IM FINALE" },
+      { category: "Spiel & Spaß", solution: "EIN SPIELABEND AM KUECHENTISCH" },
+      { category: "Spiel & Spaß", solution: "DIE WUERFEL ROLLEN DURCH DAS ZIMMER" },
+      { category: "Spiel & Spaß", solution: "KARTEN MISCHEN UND AUSTEILEN" },
+      { category: "Spiel & Spaß", solution: "DER GEWINNER BEKOMMT APPLAUS" },
       // Zitate & Weisheiten
       { category: "Zitate & Weisheiten", solution: "DER WEG IST DAS ZIEL" },
       { category: "Zitate & Weisheiten", solution: "LACHEN IST DIE BESTE MEDIZIN" },
@@ -1333,7 +1367,11 @@
       { category: "Tiere & Natur", solution: "DER STORCH KLAPPERT AUF DEM DACH" },
       { category: "Tiere & Natur", solution: "EIN IGEL ROLLT SICH ZUSAMMEN" },
       { category: "Tiere & Natur", solution: "DIE BIENE FLIEGT VON BLUETE ZU BLUETE" },
-      { category: "Tiere & Natur", solution: "DER HIRSCH ROEHRT IM HERBST" }
+      { category: "Tiere & Natur", solution: "DER HIRSCH ROEHRT IM HERBST" },
+      { category: "Tiere & Natur", solution: "REGENWOLKEN ZIEHEN UEBER DIE FELDER" },
+      { category: "Tiere & Natur", solution: "BLUMEN WACHSEN AM WEGESRAND" },
+      { category: "Tiere & Natur", solution: "EIN FROSCH HUEPFT IN DEN TEICH" },
+      { category: "Tiere & Natur", solution: "DER WIND RASCHELT IN DEN BLAETTERN" }
     ];
 
     const consonants = "BCDFGHJKLMNPQRSTVWXYZ".split("");
@@ -1382,11 +1420,14 @@
       clockRIn: 20,
       clockROut: 43,
       jokerUsed: false,
+      targetRounds: 5,
+      roundNumber: 1,
       playMode: "local",
       roomCode: ""
     };
 
     const $ = (id) => document.getElementById(id);
+    const RECENT_PUZZLES_KEY = "wlanGluecksradRecentPuzzles";
     const network = {
       socket: null,
       connected: false,
@@ -1410,6 +1451,10 @@
 
     function activePlayer() {
       return state.players[state.active];
+    }
+
+    function isFinalRound() {
+      return state.roundNumber >= state.targetRounds;
     }
 
     function setupWheel() {
@@ -1595,6 +1640,8 @@
         charging: state.charging,
         spinPower: state.spinPower,
         phase: state.phase,
+        targetRounds: state.targetRounds,
+        roundNumber: state.roundNumber,
         difficulty: state.difficulty,
         roundTime: state.roundTime,
         clockFields: state.clockFields,
@@ -1640,6 +1687,8 @@
       state.charging = !!snapshot.charging;
       state.spinPower = snapshot.spinPower || 0;
       state.phase = snapshot.phase || "spin";
+      state.targetRounds = snapshot.targetRounds || state.targetRounds;
+      state.roundNumber = snapshot.roundNumber || state.roundNumber;
       state.difficulty = snapshot.difficulty || state.difficulty;
       state.roundTime = snapshot.roundTime || state.roundTime;
       state.clockFields = snapshot.clockFields || state.clockFields;
@@ -1706,6 +1755,7 @@
       }));
       state.active = 0;
       state.puzzleBag = [];
+      state.roundNumber = 1;
       applyDifficultyDial();
       state.puzzleIndex = drawPuzzleIndex();
       syncJoinCode();
@@ -1797,21 +1847,47 @@
       return indices.length ? indices : puzzles.map((_, i) => i);
     }
 
+    function loadRecentPuzzles() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(RECENT_PUZZLES_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed.filter(Number.isInteger) : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function rememberPuzzleIndex(index) {
+      try {
+        const recent = [index].concat(loadRecentPuzzles().filter((item) => item !== index));
+        localStorage.setItem(RECENT_PUZZLES_KEY, JSON.stringify(recent.slice(0, 80)));
+      } catch (_) {}
+    }
+
+    function shuffled(indices) {
+      const copy = indices.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
     // Shuffle-Bag: zieht jeden Begriff der Stufe genau einmal, bevor sich etwas wiederholt.
-    // Beim Nachfuellen wird vermieden, dass derselbe Begriff direkt zweimal kommt.
+    // Beim Nachfuellen werden Begriffe aus den letzten Spielen bevorzugt vermieden.
     function drawPuzzleIndex() {
       if (state.puzzleBag.length === 0) {
-        const indices = allowedPuzzleIndices();
-        for (let i = indices.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [indices[i], indices[j]] = [indices[j], indices[i]];
-        }
+        const allowed = allowedPuzzleIndices();
+        const recent = new Set(loadRecentPuzzles());
+        const fresh = allowed.filter((index) => !recent.has(index));
+        const indices = shuffled(fresh.length >= Math.min(state.targetRounds, 3) ? fresh : allowed);
         if (indices.length > 1 && indices[0] === state.puzzleIndex) {
           [indices[0], indices[1]] = [indices[1], indices[0]];
         }
         state.puzzleBag = indices;
       }
-      return state.puzzleBag.shift();
+      const index = state.puzzleBag.shift();
+      rememberPuzzleIndex(index);
+      return index;
     }
 
     function newRound(next = true) {
@@ -1830,7 +1906,9 @@
       });
       hideWinner();
       state.phase = "spin";
-      $("spinResult").textContent = "Drehen halten, loslassen zum Start.";
+      $("spinResult").textContent = isFinalRound()
+        ? `Finalrunde ${state.roundNumber}/${state.targetRounds}: Punkte zaehlen doppelt.`
+        : `Runde ${state.roundNumber}/${state.targetRounds}: Drehen halten, loslassen zum Start.`;
       renderAll();
       startTimer(state.roundTime);
       publishState();
@@ -1936,7 +2014,7 @@
       if (count > 0) {
         playSound("correct");
         state.revealed.add(letter);
-        const points = source === "buy" ? 0 : count * 20;
+        const points = source === "buy" ? 0 : count * 20 * (isFinalRound() ? 2 : 1);
         player.score += points;
         $("spinResult").textContent = source === "buy"
           ? `${letter} gekauft: ${count} Treffer.`
@@ -1958,7 +2036,7 @@
 
     function openKeyboard() {
       const player = activePlayer();
-      if (!player || player.score < 10 || player.buys >= 3 || state.phase === "done") return;
+      if (!player || player.score < 10 || player.buys >= 3 || state.phase !== "spin") return;
       $("keyboardPanel").classList.add("open");
       renderVowelKeyboard();
     }
@@ -1973,7 +2051,7 @@
     }
 
     function openSolve() {
-      if (state.phase === "setup" || state.phase === "done") return;
+      if (state.phase !== "spin") return;
       stopTimer();
       $("solveInput").value = "";
       $("solvePanel").classList.add("open");
@@ -1992,7 +2070,7 @@
       if (!guess) return;
       $("solvePanel").classList.remove("open");
       if (guess === normalizeText(state.puzzle.solution)) {
-        activePlayer().score += 100;
+        activePlayer().score += isFinalRound() ? 200 : 100;
         finishRound(activePlayer());
       } else {
         playSound("wrong");
@@ -2013,9 +2091,30 @@
       showWinner(player);
       publishState();
       window.setTimeout(() => {
+        if (state.roundNumber >= state.targetRounds) {
+          finishGame();
+          return;
+        }
+        state.roundNumber += 1;
         state.active = (state.active + 1) % state.players.length;
         newRound(true);
       }, 2800);
+    }
+
+    function finishGame() {
+      stopTimer();
+      state.phase = "finished";
+      const bestScore = Math.max(...state.players.map((player) => player.score));
+      const winners = state.players.filter((player) => player.score === bestScore);
+      const names = winners.map((player) => player.name).join(" & ");
+      $("spinResult").textContent = winners.length > 1
+        ? `Unentschieden nach ${state.targetRounds} Runden: ${names} mit ${bestScore} Punkten.`
+        : `Spiel beendet: ${names} gewinnt mit ${bestScore} Punkten.`;
+      renderAll();
+      showWinner({ name: names }, winners.length > 1
+        ? `Unentschieden: ${names}!`
+        : `Gesamtsieger: ${names}!`);
+      publishState();
     }
 
     function nextPlayer() {
@@ -2100,7 +2199,9 @@
     }
 
     function renderAll() {
-      $("categoryText").textContent = state.puzzle.category;
+      $("categoryText").textContent = state.players.length
+        ? `${state.puzzle.category} - Runde ${state.roundNumber}/${state.targetRounds}`
+        : state.puzzle.category;
       $("activePlayer").textContent = state.players.length ? activePlayer().name : "---";
       renderCategoryIcon();
       renderPuzzle();
@@ -2207,8 +2308,8 @@
     function renderButtons() {
       const player = state.players.length ? activePlayer() : null;
       $("spinBtn").disabled = state.phase !== "spin" || state.spinning;
-      $("buyBtn").disabled = !player || state.spinning || state.charging || state.phase === "done" || player.score < 10 || player.buys >= 3;
-      $("solveBtn").disabled = !player || state.spinning || state.charging || state.phase === "done";
+      $("buyBtn").disabled = !player || state.spinning || state.charging || state.phase !== "spin" || player.score < 10 || player.buys >= 3;
+      $("solveBtn").disabled = !player || state.spinning || state.charging || state.phase !== "spin";
       const joker = $("jokerBtn");
       if (joker) joker.disabled = !player || state.spinning || state.charging || state.phase !== "spin" || player.jokerUsed;
     }
@@ -2236,8 +2337,8 @@
       publishState();
     }
 
-    function showWinner(player) {
-      $("winnerName").textContent = `${player.name} gewinnt die Runde!`;
+    function showWinner(player, text) {
+      $("winnerName").textContent = text || `${player.name} gewinnt die Runde!`;
       const overlay = $("winnerOverlay");
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
@@ -2366,7 +2467,15 @@
       if (!btn) return;
       state.difficulty = btn.dataset.diff;
       state.puzzleBag = [];
-      document.querySelectorAll(".diff-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      document.querySelectorAll("#difficultyRow .diff-btn").forEach((b) => b.classList.toggle("active", b === btn));
+    });
+
+    $("roundRow").addEventListener("click", (event) => {
+      const btn = event.target.closest(".round-btn");
+      if (!btn) return;
+      state.targetRounds = Number(btn.dataset.rounds) || 5;
+      state.puzzleBag = [];
+      document.querySelectorAll("#roundRow .round-btn").forEach((b) => b.classList.toggle("active", b === btn));
     });
 
     $("playModeRow").addEventListener("click", (event) => {
