@@ -1,0 +1,2292 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>WLAN-Gluecksrad</title>
+  <style>
+    :root {
+      --bg: #15121a;
+      --stage: #2b1d2e;
+      --panel: #fff4d2;
+      --panel-2: #f7df9a;
+      --ink: #201926;
+      --muted: #6f6070;
+      --red: #e34c5d;
+      --gold: #ffd55d;
+      --teal: #2bd4bd;
+      --blue: #3277d8;
+      --green: #51bd74;
+      --purple: #8a5bd8;
+      --line: rgba(32, 25, 38, 0.16);
+      --shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% -18%, rgba(255, 213, 93, 0.32), transparent 42vh),
+        linear-gradient(180deg, #33213b 0%, #15121a 100%);
+      color: #fff;
+    }
+
+    body {
+      background-image:
+        linear-gradient(180deg, rgba(21, 18, 26, 0.06), rgba(21, 18, 26, 0.28)),
+        url("img/Hintergrund.png");
+      background-size: cover;
+      background-position: center;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.42;
+      filter: grayscale(0.65);
+    }
+
+    .app {
+      width: min(100vw, 520px);
+      height: 100dvh;
+      margin: 0 auto;
+      padding: max(8px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-rows: auto minmax(120px, 0.64fr) auto minmax(176px, 1fr) auto auto auto auto;
+      gap: clamp(6px, 1.1vh, 10px);
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05), transparent 13%, transparent 87%, rgba(255, 255, 255, 0.05)),
+        linear-gradient(180deg, rgba(255, 213, 93, 0.08), transparent 26%);
+      position: relative;
+      isolation: isolate;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 36px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 8px;
+    }
+
+    .logo {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: transparent;
+      font-weight: 950;
+      background-image: url("img/Logo-Icon.png");
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.16);
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(1.04rem, 5vw, 1.42rem);
+      line-height: 1;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .room {
+      padding: 7px 8px;
+      border-radius: 8px;
+      color: var(--ink);
+      background: var(--gold);
+      font-weight: 950;
+      font-size: 0.78rem;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.26);
+      white-space: nowrap;
+    }
+
+    .wheel-stage {
+      position: relative;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .wheel-window {
+      position: relative;
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 4px solid rgba(255, 244, 210, 0.95);
+      background:
+        linear-gradient(90deg, rgba(21, 18, 26, 0.86), transparent 17%, transparent 83%, rgba(21, 18, 26, 0.86)),
+        radial-gradient(circle at 50% 50%, rgba(255, 213, 93, 0.16), transparent 48%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.17), transparent 42%),
+        #2a1d30;
+      background-size: 100% 100%, auto, auto, auto;
+      background-position: center;
+      box-shadow: var(--shadow), inset 0 0 0 6px rgba(255, 213, 93, 0.14);
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      z-index: 4;
+      transform: translate(-50%, -50%);
+      width: clamp(76px, 22vw, 104px);
+      height: calc(100% - 18px);
+      border: 4px solid #fff6d9;
+      border-radius: 12px;
+      background: rgba(255, 246, 217, 0.12);
+      box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.18), inset 0 0 18px rgba(255, 255, 255, 0.22);
+    }
+
+    .letter-wheel {
+      --offset: 0px;
+      position: absolute;
+      left: 0;
+      top: 50%;
+      height: 72%;
+      display: flex;
+      align-items: stretch;
+      gap: clamp(7px, 2vw, 10px);
+      padding-inline: 12px;
+      transform: translate(var(--offset), -50%);
+      transition: transform 2.7s cubic-bezier(0.12, 0.82, 0.18, 1);
+      will-change: transform;
+    }
+
+    .wheel-letter {
+      flex: 0 0 clamp(52px, 15vw, 72px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 10px;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 213, 93, 0.08)),
+        url("img/Buchstaben-Kachel_gelb.png");
+      background-size: cover;
+      background-position: center;
+      border: 3px solid rgba(255, 255, 255, 0.76);
+      font-size: clamp(2rem, 11vw, 3.1rem);
+      font-weight: 950;
+      text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5);
+      box-shadow: inset 0 -7px 0 rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.24);
+    }
+
+    .wheel-letter:nth-child(6n+2) {
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(43, 212, 189, 0.08)), url("img/Buchstaben-Kachel_tuerkis.png");
+    }
+
+    .wheel-letter:nth-child(6n+3) {
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(227, 76, 93, 0.08)), url("img/Buchstaben-Kachel_rot.png");
+    }
+
+    .wheel-letter:nth-child(6n+4) {
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(50, 119, 216, 0.08)), url("img/Buchstaben-Kachel_blau.png");
+    }
+
+    .wheel-letter:nth-child(6n+5) {
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(81, 189, 116, 0.08)), url("img/Buchstaben-Kachel_gruen.png");
+    }
+
+    .wheel-letter:nth-child(6n) {
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(138, 91, 216, 0.08)), url("img/Buchstaben-Kachel_lila.png");
+    }
+
+    .spin-result {
+      min-height: 34px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-weight: 900;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+    }
+
+    .category {
+      position: relative;
+      min-height: 48px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #fff9e8, #f5dc91);
+      color: var(--ink);
+      border: 3px solid rgba(255, 213, 93, 0.9);
+      text-align: center;
+      box-shadow: var(--shadow);
+      display: grid;
+      place-items: center;
+    }
+
+    .category-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+      display: none;
+    }
+
+    .category small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.62rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      line-height: 1;
+    }
+
+    .category strong {
+      display: block;
+      margin-top: 3px;
+      font-size: clamp(1.22rem, 6vw, 1.86rem);
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .puzzle {
+      --tile-w: clamp(25px, 7.2vw, 39px);
+      --tile-h: clamp(31px, 8.4vw, 48px);
+      --tile-font: clamp(1.02rem, 5vw, 1.52rem);
+      min-height: 0;
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.85), transparent 36%),
+        linear-gradient(180deg, #fff8df, #f7e2a6);
+      border: 3px solid rgba(255, 213, 93, 0.9);
+      color: var(--ink);
+      padding: clamp(8px, 1.5vh, 12px);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-wrap: wrap;
+      align-content: center;
+      justify-content: center;
+      gap: clamp(4px, 1vw, 7px);
+      overflow: hidden;
+    }
+
+    .word {
+      display: inline-flex;
+      gap: clamp(4px, 1vw, 7px);
+      flex-wrap: nowrap;
+    }
+
+    .tile {
+      width: var(--tile-w);
+      height: var(--tile-h);
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      background-image: url("img/Aufgedecktes Buchstabenfeld.png");
+      background-size: cover;
+      background-position: center;
+      color: var(--ink);
+      font-size: var(--tile-font);
+      font-weight: 950;
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.12);
+    }
+
+    .tile.hidden {
+      color: transparent;
+      background-image: url("img/Verdecktes Buchstabenfeld.png");
+      background-size: cover;
+      background-position: center;
+    }
+
+    .tile.space {
+      width: clamp(8px, 2.8vw, 16px);
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .current {
+      min-height: 58px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #2bd4bd, #139a92);
+      color: #fff;
+      padding: 8px 10px;
+      border: 3px solid rgba(255, 246, 217, 0.95);
+      box-shadow: 0 0 0 3px rgba(43, 212, 189, 0.18), var(--shadow);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .turn-label {
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 0.68rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-shadow: 0 2px 3px rgba(0, 0, 0, 0.28);
+    }
+
+    .active-name {
+      font-size: clamp(1.18rem, 6vw, 1.7rem);
+      line-height: 1;
+      font-weight: 950;
+      text-shadow: 0 3px 4px rgba(0, 0, 0, 0.32);
+    }
+
+    .timer {
+      position: relative;
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      background-image: url("img/Uhr-Ziffernblatt.png");
+      background-size: cover;
+      background-position: center;
+    }
+
+    .timer .clock {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Aktives Feld leuchtet auf (kein Zeiger) */
+    .timer .clock-highlight {
+      fill: rgba(255, 255, 255, 0.42);
+      stroke: #fff3b0;
+      stroke-width: 2.4;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 3px rgba(255, 248, 190, 0.95));
+      animation: fieldGlow 0.85s ease-in-out infinite alternate;
+    }
+
+    @keyframes fieldGlow {
+      from { opacity: 0.55; }
+      to   { opacity: 1; }
+    }
+
+    .players {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      min-height: 58px;
+    }
+
+    .player {
+      min-width: 0;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background: linear-gradient(180deg, #fff9e7, #f2deb2);
+      color: var(--ink);
+      padding: 7px 8px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+    }
+
+    .player.active {
+      border-color: #fff6d9;
+      background: linear-gradient(180deg, #2bd4bd, #118d87);
+      color: #fff;
+      box-shadow: 0 0 0 3px rgba(43, 212, 189, 0.3), 0 8px 20px rgba(0, 0, 0, 0.22);
+    }
+
+    .player-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .score {
+      margin-top: 4px;
+      color: var(--red);
+      font-weight: 950;
+      font-size: 1.08rem;
+      line-height: 1;
+    }
+
+    .buys {
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 850;
+    }
+
+    .player.active .score,
+    .player.active .buys {
+      color: #fff;
+      text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr 1fr auto;
+      gap: 7px;
+      min-height: 46px;
+    }
+
+    .joker-btn {
+      width: 50px;
+      min-height: 46px;
+      border: none;
+      border-radius: 10px;
+      background: url("img/Joker.png") center/contain no-repeat;
+      filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.3));
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .joker-btn:disabled {
+      filter: grayscale(0.85) opacity(0.45);
+      cursor: default;
+    }
+
+    .winner-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 60;
+    }
+
+    .winner-overlay.show {
+      display: grid;
+    }
+
+    .winner-box {
+      text-align: center;
+      animation: winnerPop 0.45s cubic-bezier(0.18, 0.9, 0.3, 1.4);
+    }
+
+    .winner-banner {
+      width: min(74vw, 380px);
+      height: auto;
+      filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.5));
+    }
+
+    .winner-name {
+      margin-top: 10px;
+      color: #fff6d9;
+      font-size: clamp(1.2rem, 6vw, 1.8rem);
+      font-weight: 950;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    }
+
+    @keyframes winnerPop {
+      from { transform: scale(0.6); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .power {
+      min-height: 18px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 7px;
+      align-items: center;
+      color: #fff6d9;
+      font-size: 0.68rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+    }
+
+    .power-track {
+      height: 12px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 246, 217, 0.78);
+      background: rgba(20, 16, 24, 0.5);
+      overflow: hidden;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.32);
+    }
+
+    .power-fill {
+      width: calc(var(--power, 0) * 100%);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #55d6c3, #ffd55d 58%, #e34c5d);
+      box-shadow: 0 0 12px rgba(255, 213, 93, 0.52);
+      transition: width 60ms linear;
+    }
+
+    .btn {
+      min-height: 44px;
+      border-radius: 8px;
+      color: var(--ink);
+      background: linear-gradient(180deg, #fff6c7, #ffc84e);
+      font-weight: 950;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.18), 0 8px 18px rgba(0, 0, 0, 0.22);
+      white-space: nowrap;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .btn.primary {
+      background: linear-gradient(180deg, #8ef5e1, #25c2ad);
+    }
+
+    #spinBtn {
+      touch-action: none;
+    }
+
+    .btn.charging {
+      transform: translateY(2px);
+      box-shadow: inset 0 4px 0 rgba(0, 0, 0, 0.16), 0 5px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn.red {
+      background: linear-gradient(180deg, #ff97a2, #df4659);
+      color: #fff;
+      text-shadow: 0 2px 2px rgba(0, 0, 0, 0.28);
+    }
+
+    #buyBtn,
+    #closeKeyboard,
+    #closeSolve {
+      background: linear-gradient(180deg, #fff6c7, #ffc84e);
+    }
+
+    #submitSolve,
+    #startBtn {
+      background: linear-gradient(180deg, #8ef5e1, #25c2ad);
+    }
+
+    .setup,
+    .keyboard-panel,
+    .solve-panel {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 12px;
+      background: rgba(14, 11, 17, 0.84);
+    }
+
+    .keyboard-panel,
+    .solve-panel {
+      display: none;
+    }
+
+    .keyboard-panel.open,
+    .solve-panel.open {
+      display: grid;
+    }
+
+    .card {
+      width: min(100%, 460px);
+      max-height: calc(100dvh - 24px);
+      overflow: auto;
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      font-size: clamp(1.4rem, 7vw, 2rem);
+      line-height: 1;
+      margin-bottom: 7px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-weight: 760;
+      line-height: 1.32;
+      margin-bottom: 10px;
+    }
+
+    .name-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .diff-label {
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 0.92rem;
+      margin: 4px 0 6px;
+    }
+
+    .diff-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .mode-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .diff-btn {
+      min-height: 40px;
+      border-radius: 8px;
+      border: 2px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-weight: 900;
+      font-size: 0.9rem;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .diff-btn.active {
+      border-color: transparent;
+      background: linear-gradient(180deg, #8ef5e1, #25c2ad);
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.16);
+    }
+
+    .mode-btn {
+      min-height: 48px;
+      padding: 6px 5px;
+      line-height: 1.05;
+      white-space: normal;
+    }
+
+    .network-settings {
+      display: none;
+      gap: 8px;
+      margin: 0 0 12px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.58);
+      border: 2px solid var(--line);
+    }
+
+    .network-settings.open {
+      display: grid;
+    }
+
+    .connection-code {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 950;
+    }
+
+    .connection-code span {
+      color: var(--red);
+      font-size: 1.2rem;
+      letter-spacing: 0.08em;
+    }
+
+    .network-actions {
+      display: grid;
+      grid-template-columns: minmax(120px, 0.9fr) minmax(0, 1fr);
+      gap: 7px;
+    }
+
+    .mini-btn {
+      min-height: 42px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #fff6c7, #ffc84e);
+      color: var(--ink);
+      font-weight: 950;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.16);
+      touch-action: manipulation;
+    }
+
+    .connection-status {
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.2;
+      font-weight: 850;
+    }
+
+    input {
+      -webkit-touch-callout: default;
+      -webkit-user-select: text;
+      user-select: text;
+      width: 100%;
+      min-height: 42px;
+      border-radius: 8px;
+      border: 2px solid var(--line);
+      padding: 0 10px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 880;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 4px rgba(43, 212, 189, 0.18);
+    }
+
+    .keyboard {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .key {
+      min-height: 46px;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 950;
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    .key.used {
+      background: #b8b0b9;
+      box-shadow: none;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .ui-hidden {
+      display: none !important;
+    }
+
+    @media (max-height: 720px) {
+      .app {
+        grid-template-rows: auto minmax(104px, 0.56fr) auto minmax(156px, 0.92fr) auto auto auto auto;
+        gap: 6px;
+      }
+
+      .wheel-letter {
+        flex-basis: clamp(48px, 14vw, 62px);
+        font-size: clamp(1.75rem, 10vw, 2.55rem);
+      }
+
+      .spin-result {
+        min-height: 30px;
+        padding: 5px 8px;
+        font-size: 0.82rem;
+      }
+
+      .category {
+        min-height: 42px;
+        padding: 6px 10px;
+      }
+
+      .category strong {
+        font-size: 1.16rem;
+      }
+
+      .current {
+        min-height: 50px;
+        padding: 6px 8px;
+      }
+
+      .timer {
+        width: 58px;
+        height: 58px;
+      }
+
+      .players {
+        min-height: 50px;
+      }
+
+      .player {
+        padding: 5px 7px;
+      }
+
+      .btn {
+        min-height: 39px;
+        font-size: 0.86rem;
+      }
+
+      .power {
+        min-height: 14px;
+        font-size: 0.6rem;
+      }
+
+      .power-track {
+        height: 9px;
+      }
+    }
+
+    @media (max-height: 620px) {
+      .app {
+        grid-template-rows: auto minmax(80px, 0.45fr) auto minmax(132px, 0.82fr) auto auto auto auto;
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
+
+      .room {
+        font-size: 0.7rem;
+        padding: 5px 7px;
+      }
+
+      .logo {
+        width: 30px;
+        height: 30px;
+      }
+
+      h1 {
+        font-size: 1rem;
+      }
+
+      .wheel-window {
+        border-width: 3px;
+      }
+
+      .players {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        min-height: 42px;
+      }
+
+      .score {
+        font-size: 0.92rem;
+      }
+
+      .buys {
+        display: none;
+      }
+
+      .network-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">W</div>
+        <h1>WLAN-Gluecksrad</h1>
+      </div>
+      <div class="room">Raum <span id="roomCode">----</span></div>
+    </header>
+
+    <section class="wheel-stage" aria-label="Buchstabenrad">
+      <div class="wheel-window">
+        <div class="wheel-pointer" aria-hidden="true"></div>
+        <div id="letterWheel" class="letter-wheel"></div>
+      </div>
+      <div id="spinResult" class="spin-result">Drehen halten, loslassen zum Start.</div>
+    </section>
+
+    <section class="category">
+      <div>
+        <small>Oberbegriff</small>
+        <strong id="categoryText">---</strong>
+      </div>
+      <img id="categoryIcon" class="category-icon" alt="">
+    </section>
+
+    <section id="puzzle" class="puzzle" aria-label="Zu erratender Begriff"></section>
+
+    <section class="current">
+      <div>
+        <div class="turn-label">Gerade dran</div>
+        <div id="activePlayer" class="active-name">---</div>
+      </div>
+      <div id="timer" class="timer">
+        <svg class="clock" viewBox="0 0 100 100" aria-hidden="true">
+          <path id="clockHighlight" class="clock-highlight" d="" style="display:none"></path>
+        </svg>
+      </div>
+    </section>
+
+    <section id="players" class="players" aria-label="Spieler"></section>
+
+    <section class="power" aria-label="Drehstärke">
+      <span>Schwach</span>
+      <div class="power-track">
+        <div id="powerFill" class="power-fill"></div>
+      </div>
+      <span>Stark</span>
+    </section>
+
+    <section class="actions">
+      <button id="spinBtn" class="btn primary">Drehen</button>
+      <button id="buyBtn" class="btn">Kaufen</button>
+      <button id="solveBtn" class="btn red">Loesen</button>
+      <button id="jokerBtn" class="joker-btn" aria-label="Joker: einen Buchstaben gratis aufdecken" title="Joker: einen Buchstaben gratis aufdecken"></button>
+    </section>
+  </main>
+
+  <div id="winnerOverlay" class="winner-overlay" aria-hidden="true">
+    <div class="winner-box">
+      <img src="img/Sieger_Banner.png" alt="Sieger" class="winner-banner">
+      <div id="winnerName" class="winner-name"></div>
+    </div>
+  </div>
+
+  <section id="setup" class="setup">
+    <div class="card">
+      <h2>Start</h2>
+      <p>2 bis 4 Spieler. Das Rad zeigt Konsonanten; Vokale werden gekauft.</p>
+      <div class="name-grid">
+        <input id="name1" value="Anna" maxlength="12" aria-label="Spieler 1">
+        <input id="name2" value="Ben" maxlength="12" aria-label="Spieler 2">
+        <input id="name3" placeholder="Spieler 3" maxlength="12" aria-label="Spieler 3">
+        <input id="name4" placeholder="Spieler 4" maxlength="12" aria-label="Spieler 4">
+      </div>
+      <div class="diff-label">Schwierigkeit</div>
+      <div class="diff-row" id="difficultyRow">
+        <button type="button" class="diff-btn" data-diff="kinder">Kinder</button>
+        <button type="button" class="diff-btn" data-diff="jugend">Jugendliche</button>
+        <button type="button" class="diff-btn active" data-diff="erwachsen">Erwachsene</button>
+      </div>
+      <div class="diff-label">Spielart</div>
+      <div class="mode-row" id="playModeRow">
+        <button type="button" class="diff-btn mode-btn active" data-mode="local">An einem Geraet</button>
+        <button type="button" class="diff-btn mode-btn" data-mode="wlan">Mensch gegen Mensch WLAN Code</button>
+        <button type="button" class="diff-btn mode-btn" data-mode="mobile">Mensch gegen Mensch Mobile Daten</button>
+      </div>
+      <div id="networkSettings" class="network-settings">
+        <div class="connection-code">Spiel-Code <span id="setupRoomCode">----</span></div>
+        <div class="network-actions">
+          <button id="createRoomBtn" type="button" class="mini-btn">Code erstellen</button>
+          <input id="joinCodeInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Code eingeben" aria-label="Spiel-Code eingeben">
+        </div>
+        <div id="networkStatus" class="connection-status">Waehle Code erstellen oder gib den Code vom anderen Spieler ein.</div>
+      </div>
+      <button id="startBtn" class="btn primary">Spiel starten</button>
+    </div>
+  </section>
+
+  <section id="keyboardPanel" class="keyboard-panel">
+    <div class="card">
+      <h2>Vokal kaufen</h2>
+      <p>Ein Vokal kostet 10 Punkte. Pro Spieler sind 3 Kaeufe pro Runde moeglich.</p>
+      <div id="vowelKeyboard" class="keyboard"></div>
+      <div class="dialog-actions">
+        <button id="closeKeyboard" class="btn">Schliessen</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="solvePanel" class="solve-panel">
+    <div class="card">
+      <h2>Loesen</h2>
+      <p>Leerzeichen und Satzzeichen werden automatisch ignoriert.</p>
+      <input id="solveInput" placeholder="Loesung eingeben" autocomplete="off">
+      <div class="dialog-actions">
+        <button id="closeSolve" class="btn">Abbrechen</button>
+        <button id="submitSolve" class="btn primary">Pruefen</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const puzzles = [
+      // Redewendung
+      { category: "Redewendung", solution: "DA LIEGT DER HUND BEGRABEN" },
+      { category: "Redewendung", solution: "DEN NAGEL AUF DEN KOPF TREFFEN" },
+      { category: "Redewendung", solution: "DIE KATZE IM SACK KAUFEN" },
+      { category: "Redewendung", solution: "TOMATEN AUF DEN AUGEN HABEN" },
+      { category: "Redewendung", solution: "DAS IST NICHT MEIN BIER" },
+      { category: "Redewendung", solution: "INS KALTE WASSER SPRINGEN" },
+      { category: "Redewendung", solution: "AUS EINER MUECKE EINEN ELEFANTEN MACHEN" },
+      { category: "Redewendung", solution: "JEMANDEM EINEN BAEREN AUFBINDEN" },
+      { category: "Redewendung", solution: "DEN KOPF IN DEN SAND STECKEN" },
+      { category: "Redewendung", solution: "DAS HANDTUCH WERFEN" },
+      { category: "Redewendung", solution: "AUF DEM HOLZWEG SEIN" },
+      { category: "Redewendung", solution: "MIT DEM FALSCHEN FUSS AUFSTEHEN" },
+      { category: "Redewendung", solution: "ZWEI FLIEGEN MIT EINER KLAPPE SCHLAGEN" },
+      { category: "Redewendung", solution: "JEMANDEM DIE DAUMEN DRUECKEN" },
+      { category: "Redewendung", solution: "DEN FADEN VERLIEREN" },
+      { category: "Redewendung", solution: "NOCH EINMAL MIT EINEM BLAUEN AUGE DAVONKOMMEN" },
+      { category: "Redewendung", solution: "DIE KIRCHE IM DORF LASSEN" },
+      { category: "Redewendung", solution: "OEL INS FEUER GIESSEN" },
+      { category: "Redewendung", solution: "EIN BRETT VOR DEM KOPF HABEN" },
+      { category: "Redewendung", solution: "DER FRUEHE VOGEL FAENGT DEN WURM" },
+      // Sprichwort
+      { category: "Sprichwort", solution: "MORGENSTUND HAT GOLD IM MUND" },
+      { category: "Sprichwort", solution: "OHNE FLEISS KEIN PREIS" },
+      { category: "Sprichwort", solution: "WER ZULETZT LACHT LACHT AM BESTEN" },
+      { category: "Sprichwort", solution: "DER APFEL FAELLT NICHT WEIT VOM STAMM" },
+      { category: "Sprichwort", solution: "UEBUNG MACHT DEN MEISTER" },
+      { category: "Sprichwort", solution: "VIELE KOECHE VERDERBEN DEN BREI" },
+      { category: "Sprichwort", solution: "ALLER ANFANG IST SCHWER" },
+      { category: "Sprichwort", solution: "ENDE GUT ALLES GUT" },
+      { category: "Sprichwort", solution: "EHRLICH WAEHRT AM LAENGSTEN" },
+      { category: "Sprichwort", solution: "WER ANDEREN EINE GRUBE GRAEBT FAELLT SELBST HINEIN" },
+      { category: "Sprichwort", solution: "KLEINVIEH MACHT AUCH MIST" },
+      { category: "Sprichwort", solution: "IN DER RUHE LIEGT DIE KRAFT" },
+      { category: "Sprichwort", solution: "WAS DU HEUTE KANNST BESORGEN" },
+      { category: "Sprichwort", solution: "LUEGEN HABEN KURZE BEINE" },
+      { category: "Sprichwort", solution: "REDEN IST SILBER SCHWEIGEN IST GOLD" },
+      // Bauernregel
+      { category: "Bauernregel", solution: "APRIL APRIL DER MACHT WAS ER WILL" },
+      { category: "Bauernregel", solution: "IST DER MAI KUEHL UND NASS FUELLT ER SCHEUNE UND FASS" },
+      { category: "Bauernregel", solution: "ABENDROT SCHOENWETTERBOT" },
+      { category: "Bauernregel", solution: "MORGENROT MIT REGEN DROHT" },
+      { category: "Bauernregel", solution: "REGNET ES AM SIEBENSCHLAEFERTAG ES SIEBEN WOCHEN REGNEN MAG" },
+      { category: "Bauernregel", solution: "WENN DER HAHN KRAEHT AUF DEM MIST AENDERT SICH DAS WETTER ODER ES BLEIBT WIE ES IST" },
+      { category: "Bauernregel", solution: "MAERZENSCHNEE TUT DEN SAATEN WEH" },
+      { category: "Bauernregel", solution: "DONNERT ES IM MAERZ FREUT SICH DES BAUERN HERZ" },
+      { category: "Bauernregel", solution: "EIN TROCKENER MAERZ IST DES BAUERN SCHMERZ" },
+      { category: "Bauernregel", solution: "WENN IM JANUAR VIEL NEBEL STEIGEN WIRD SICH EIN SCHOENES FRUEHJAHR ZEIGEN" },
+      { category: "Bauernregel", solution: "IST DER OKTOBER WARM UND FEIN KOMMT EIN SCHARFER WINTER HINTERDREIN" },
+      { category: "Bauernregel", solution: "FAELLT IM NOVEMBER DAS LAUB ZU FRUEH WIRD DER WINTER NICHT GAR MUEH" },
+      // Filmtitel
+      { category: "Filmtitel", solution: "DER HERR DER RINGE" },
+      { category: "Filmtitel", solution: "ZURUECK IN DIE ZUKUNFT" },
+      { category: "Filmtitel", solution: "KEVIN ALLEIN ZU HAUS" },
+      { category: "Filmtitel", solution: "DER KOENIG DER LOEWEN" },
+      { category: "Filmtitel", solution: "FLUCH DER KARIBIK" },
+      { category: "Filmtitel", solution: "JURASSIC PARK" },
+      { category: "Filmtitel", solution: "EISKALTE ENGEL" },
+      { category: "Filmtitel", solution: "DAS BOOT" },
+      { category: "Filmtitel", solution: "DIE UNENDLICHE GESCHICHTE" },
+      { category: "Filmtitel", solution: "DER SCHUH DES MANITU" },
+      { category: "Filmtitel", solution: "ZIEMLICH BESTE FREUNDE" },
+      { category: "Filmtitel", solution: "HARRY POTTER UND DER STEIN DER WEISEN" },
+      { category: "Filmtitel", solution: "INDIANA JONES UND DER LETZTE KREUZZUG" },
+      { category: "Filmtitel", solution: "STAR WARS DAS IMPERIUM SCHLAEGT ZURUECK" },
+      { category: "Filmtitel", solution: "DER MIT DEM WOLF TANZT" },
+      { category: "Filmtitel", solution: "EINER FLOG UEBER DAS KUCKUCKSNEST" },
+      // Serien & TV
+      { category: "Serien & TV", solution: "WER WIRD MILLIONAER" },
+      { category: "Serien & TV", solution: "DIE SENDUNG MIT DER MAUS" },
+      { category: "Serien & TV", solution: "EIN HERZ UND EINE SEELE" },
+      { category: "Serien & TV", solution: "RAUMSCHIFF ENTERPRISE" },
+      { category: "Serien & TV", solution: "GUTE ZEITEN SCHLECHTE ZEITEN" },
+      { category: "Serien & TV", solution: "TATORT AUS MUENSTER" },
+      { category: "Serien & TV", solution: "DIE SCHWARZWALDKLINIK" },
+      { category: "Serien & TV", solution: "MORD MIT AUSSICHT" },
+      { category: "Serien & TV", solution: "DER BERGDOKTOR" },
+      { category: "Serien & TV", solution: "DALLI DALLI" },
+      // Songtitel
+      { category: "Songtitel", solution: "ATEMLOS DURCH DIE NACHT" },
+      { category: "Songtitel", solution: "EIN BISSCHEN FRIEDEN" },
+      { category: "Songtitel", solution: "UEBER DEN WOLKEN" },
+      { category: "Songtitel", solution: "GRIECHISCHER WEIN" },
+      { category: "Songtitel", solution: "MARMOR STEIN UND EISEN BRICHT" },
+      { category: "Songtitel", solution: "SKANDAL IM SPERRBEZIRK" },
+      { category: "Songtitel", solution: "MAJOR TOM VOELLIG LOSGELOEST" },
+      { category: "Songtitel", solution: "TAGE WIE DIESE" },
+      { category: "Songtitel", solution: "AUF UNS" },
+      { category: "Songtitel", solution: "WAHNSINN WARUM SCHICKST DU MICH IN DIE HOELLE" },
+      { category: "Songtitel", solution: "ICH WAR NOCH NIEMALS IN NEW YORK" },
+      { category: "Songtitel", solution: "ANITA" },
+      { category: "Songtitel", solution: "DU HAST MICH TAUSENDMAL BELOGEN" },
+      { category: "Songtitel", solution: "EIN STERN DER DEINEN NAMEN TRAEGT" },
+      { category: "Songtitel", solution: "MAENNER SIND SCHWEINE" },
+      { category: "Songtitel", solution: "IRGENDWIE IRGENDWO IRGENDWANN" },
+      // Orte in Deutschland
+      { category: "Orte in Deutschland", solution: "SCHLOSS NEUSCHWANSTEIN IN BAYERN" },
+      { category: "Orte in Deutschland", solution: "DER KOELNER DOM AM RHEIN" },
+      { category: "Orte in Deutschland", solution: "DIE SPEICHERSTADT IN HAMBURG" },
+      { category: "Orte in Deutschland", solution: "DAS BRANDENBURGER TOR IN BERLIN" },
+      { category: "Orte in Deutschland", solution: "DIE ZUGSPITZE IN DEN ALPEN" },
+      { category: "Orte in Deutschland", solution: "DIE INSEL RUEGEN AN DER OSTSEE" },
+      { category: "Orte in Deutschland", solution: "DER BODENSEE IM SUEDEN DEUTSCHLANDS" },
+      { category: "Orte in Deutschland", solution: "DIE LUENEBURGER HEIDE" },
+      { category: "Orte in Deutschland", solution: "DAS WATTENMEER AN DER NORDSEE" },
+      { category: "Orte in Deutschland", solution: "DIE ALTSTADT VON LUEBECK" },
+      // Orte in Europa
+      { category: "Orte in Europa", solution: "DIE GRACHTEN VON AMSTERDAM" },
+      { category: "Orte in Europa", solution: "DER EIFFELTURM IN PARIS" },
+      { category: "Orte in Europa", solution: "DIE ALGARVE IN PORTUGAL" },
+      { category: "Orte in Europa", solution: "DIE TOSKANA IN ITALIEN" },
+      { category: "Orte in Europa", solution: "DIE COSTA BRAVA IN SPANIEN" },
+      { category: "Orte in Europa", solution: "DER MARKUSPLATZ IN VENEDIG" },
+      { category: "Orte in Europa", solution: "DIE KREIDEFELSEN VON DOVER" },
+      { category: "Orte in Europa", solution: "DER PRATER IN WIEN" },
+      { category: "Orte in Europa", solution: "DIE ALTSTADT VON PRAG" },
+      { category: "Orte in Europa", solution: "DIE COTE DAZUR IN SUEDFRANKREICH" },
+      // Sehenswürdigkeit
+      { category: "Sehenswürdigkeit", solution: "DER SCHIEFE TURM VON PISA" },
+      { category: "Sehenswürdigkeit", solution: "DIE SAGRADA FAMILIA IN BARCELONA" },
+      { category: "Sehenswürdigkeit", solution: "DAS KOLOSSEUM IN ROM" },
+      { category: "Sehenswürdigkeit", solution: "DIE TOWER BRIDGE IN LONDON" },
+      { category: "Sehenswürdigkeit", solution: "DER MONT SAINT MICHEL" },
+      { category: "Sehenswürdigkeit", solution: "DER PETERSDOM IM VATIKAN" },
+      { category: "Sehenswürdigkeit", solution: "DIE AKROPOLIS VON ATHEN" },
+      { category: "Sehenswürdigkeit", solution: "DAS SCHLOSS VERSAILLES" },
+      // Urlaub & Reise
+      { category: "Urlaub & Reise", solution: "MIT DEM WOHNMOBIL DURCH EUROPA REISEN" },
+      { category: "Urlaub & Reise", solution: "SONNENUNTERGANG AM MEER GENIESSEN" },
+      { category: "Urlaub & Reise", solution: "EIN SPAZIERGANG DURCH DIE ALTSTADT" },
+      { category: "Urlaub & Reise", solution: "FRUEHSTUECK AUF DEM CAMPINGPLATZ" },
+      { category: "Urlaub & Reise", solution: "MIT DEM FAHRRAD AM FLUSS ENTLANGFAHREN" },
+      { category: "Urlaub & Reise", solution: "EIN KLEINER FLOHMARKT AM SONNTAGMORGEN" },
+      { category: "Urlaub & Reise", solution: "EINE WANDERUNG DURCH DIE WEINBERGE" },
+      { category: "Urlaub & Reise", solution: "EIN PICKNICK AM SEE" },
+      { category: "Urlaub & Reise", solution: "POSTKARTEN AUS DEM URLAUB SCHREIBEN" },
+      { category: "Urlaub & Reise", solution: "KOFFER PACKEN UND LOSFAHREN" },
+      // Antiquitäten & Flohmarkt
+      { category: "Antiquitäten & Flohmarkt", solution: "EINE ALTE TASCHENUHR VOM FLOHMARKT" },
+      { category: "Antiquitäten & Flohmarkt", solution: "EIN HANDKOLORIERTER KUPFERSTICH" },
+      { category: "Antiquitäten & Flohmarkt", solution: "PORZELLAN AUS GROSSMUTTERS VITRINE" },
+      { category: "Antiquitäten & Flohmarkt", solution: "EIN VERSTAUBTES GEMAELDE AUF DEM DACHBODEN" },
+      { category: "Antiquitäten & Flohmarkt", solution: "SILBERBESTECK MIT MONOGRAMM" },
+      { category: "Antiquitäten & Flohmarkt", solution: "EINE ANTIKE SPIELUHR AUS HOLZ" },
+      { category: "Antiquitäten & Flohmarkt", solution: "DER GEHEIMNISVOLLE FUND AUF DEM TROEDELMARKT" },
+      { category: "Antiquitäten & Flohmarkt", solution: "EINE ALTE KOMMODE MIT MESSINGGRIFFEN" },
+      // Essen & Trinken
+      { category: "Essen & Trinken", solution: "SPAGHETTI MIT TOMATENSOSSE" },
+      { category: "Essen & Trinken", solution: "SCHNITZEL MIT POMMES UND SALAT" },
+      { category: "Essen & Trinken", solution: "KARTOFFELSALAT MIT WUERSTCHEN" },
+      { category: "Essen & Trinken", solution: "FRISCHER APFELKUCHEN MIT SAHNE" },
+      { category: "Essen & Trinken", solution: "BRATKARTOFFELN MIT SPIEGELEI" },
+      { category: "Essen & Trinken", solution: "KAFFEE UND KUCHEN AM SONNTAGNACHMITTAG" },
+      { category: "Essen & Trinken", solution: "HEISSE SCHOKOLADE MIT SCHLAGSAHNE" },
+      { category: "Essen & Trinken", solution: "FRISCHE ERDBEEREN MIT VANILLEEIS" },
+      { category: "Essen & Trinken", solution: "CURRYWURST MIT POMMES ROT WEISS" },
+      { category: "Essen & Trinken", solution: "HAUSGEMACHTE MARMELADE AUFS FRUEHSTUECKSBROT" },
+      // Alltag
+      { category: "Alltag", solution: "DER SCHLUESSEL LIEGT IM KUEHLSCHRANK" },
+      { category: "Alltag", solution: "DIE FERNBEDIENUNG IST VERSCHWUNDEN" },
+      { category: "Alltag", solution: "NOCH FUENF MINUTEN LIEGEN BLEIBEN" },
+      { category: "Alltag", solution: "DER WECKER KLINGELT VIEL ZU FRUEH" },
+      { category: "Alltag", solution: "HEUTE BLEIBT DIE KUECHE KALT" },
+      { category: "Alltag", solution: "DAS WOCHENENDE IST VIEL ZU KURZ" },
+      { category: "Alltag", solution: "EIN GEMUETLICHER ABEND AUF DEM SOFA" },
+      { category: "Alltag", solution: "DER EINKAUFZETTEL LIEGT NOCH ZU HAUSE" },
+      { category: "Alltag", solution: "DIE SOCKEN VERSCHWINDEN IN DER WASCHMASCHINE" },
+      { category: "Alltag", solution: "ERST KAFFEE DANN KANN DER TAG BEGINNEN" },
+      // Märchen
+      { category: "Märchen", solution: "HAENSEL UND GRETEL VERLAUFEN SICH IM WALD" },
+      { category: "Märchen", solution: "ROTKAEPPCHEN BESUCHT DIE GROSSMUTTER" },
+      { category: "Märchen", solution: "SCHNEEWITTCHEN UND DIE SIEBEN ZWERGE" },
+      { category: "Märchen", solution: "DER GESTIEFELTE KATER" },
+      { category: "Märchen", solution: "DER FROSCHKOENIG AM BRUNNEN" },
+      { category: "Märchen", solution: "RAPUNZEL LAESST IHR HAAR HERUNTER" },
+      { category: "Märchen", solution: "DORNROESCHEN SCHLAEFT HUNDERT JAHRE" },
+      { category: "Märchen", solution: "FRAU HOLLE SCHUETTELT DIE BETTEN AUS" },
+      // Berühmte Figuren
+      { category: "Berühmte Figuren", solution: "SHERLOCK HOLMES LOEST DEN FALL" },
+      { category: "Berühmte Figuren", solution: "ROBIN HOOD IM SHERWOOD FOREST" },
+      { category: "Berühmte Figuren", solution: "PIPPI LANGSTRUMPF MACHT WAS SIE WILL" },
+      { category: "Berühmte Figuren", solution: "WINNETOU UND OLD SHATTERHAND" },
+      { category: "Berühmte Figuren", solution: "HEIDI IN DEN BERGEN" },
+      { category: "Berühmte Figuren", solution: "DRACULA BEI NACHT" },
+      { category: "Berühmte Figuren", solution: "DER KLEINE PRINZ AUF SEINEM PLANETEN" },
+      // Sport
+      { category: "Sport", solution: "DAS ENTSCHEIDENDE TOR IN LETZTER MINUTE" },
+      { category: "Sport", solution: "ELFMETERSCHIESSEN IM FINALE" },
+      { category: "Sport", solution: "DER BALL ROLLT INS AUS" },
+      { category: "Sport", solution: "EINE RUNDE MINIGOLF MIT DER FAMILIE" },
+      { category: "Sport", solution: "DER MARATHON DURCH DIE INNENSTADT" },
+      { category: "Sport", solution: "EIN SPRUNG VOM DREIMETERBRETT" },
+      { category: "Sport", solution: "DER PERFEKTE AUFSCHLAG BEIM TENNIS" },
+      { category: "Sport", solution: "EIN AUSRITT BEI SONNENUNTERGANG" },
+      // Spiel & Spaß
+      { category: "Spiel & Spaß", solution: "EINE RUNDE STADT LAND FLUSS" },
+      { category: "Spiel & Spaß", solution: "MENSCH AERGERE DICH NICHT" },
+      { category: "Spiel & Spaß", solution: "VERSTECKEN SPIELEN IM GARTEN" },
+      { category: "Spiel & Spaß", solution: "DER WUERFEL FAELLT VOM TISCH" },
+      { category: "Spiel & Spaß", solution: "EIN JOKER RETTET DIE RUNDE" },
+      { category: "Spiel & Spaß", solution: "DER LETZTE BUCHSTABE ENTSCHEIDET" },
+      { category: "Spiel & Spaß", solution: "NOCH EINMAL DREHEN UND HOFFEN" },
+      { category: "Spiel & Spaß", solution: "ALLES ODER NICHTS IM FINALE" },
+      // Zitate & Weisheiten
+      { category: "Zitate & Weisheiten", solution: "DER WEG IST DAS ZIEL" },
+      { category: "Zitate & Weisheiten", solution: "LACHEN IST DIE BESTE MEDIZIN" },
+      { category: "Zitate & Weisheiten", solution: "JEDER TAG IST EIN GESCHENK" },
+      { category: "Zitate & Weisheiten", solution: "GLUECK BEGINNT IM KOPF" },
+      { category: "Zitate & Weisheiten", solution: "KLEINE SCHRITTE FUEHREN AUCH ANS ZIEL" },
+      { category: "Zitate & Weisheiten", solution: "MUT STEHT AM ANFANG DES HANDELNS" },
+      { category: "Zitate & Weisheiten", solution: "WER WAGT GEWINNT" },
+      { category: "Zitate & Weisheiten", solution: "FANTASIE IST WICHTIGER ALS WISSEN" },
+      // Lustige Sätze
+      { category: "Lustige Sätze", solution: "OMA HAT DAS INTERNET GELOESCHT" },
+      { category: "Lustige Sätze", solution: "PAPA TANZT IM SUPERMARKT" },
+      { category: "Lustige Sätze", solution: "DER HUND HAT MEINE HAUSAUFGABEN GEFRESSEN" },
+      { category: "Lustige Sätze", solution: "DER KUEHLSCHRANK RUFT MEINEN NAMEN" },
+      { category: "Lustige Sätze", solution: "HEUTE GIBT ES KUCHEN ZUM FRUEHSTUECK" },
+      { category: "Lustige Sätze", solution: "ICH BIN NICHT MUEDE ICH RUHE NUR DIE AUGEN AUS" },
+      { category: "Lustige Sätze", solution: "DER STAUBSAUGER HAT MEINE SOCKE GEFRESSEN" },
+      { category: "Lustige Sätze", solution: "DAS WAR SCHON SO ALS ICH KAM" },
+      // Tiere & Natur
+      { category: "Tiere & Natur", solution: "DER FUCHS SCHLEICHT DURCH DEN WALD" },
+      { category: "Tiere & Natur", solution: "EIN EICHHOERNCHEN SAMMELT NUESSE" },
+      { category: "Tiere & Natur", solution: "DIE EULE RUFT IN DER NACHT" },
+      { category: "Tiere & Natur", solution: "BUNTE SCHMETTERLINGE AUF DER WIESE" },
+      { category: "Tiere & Natur", solution: "DER STORCH KLAPPERT AUF DEM DACH" },
+      { category: "Tiere & Natur", solution: "EIN IGEL ROLLT SICH ZUSAMMEN" },
+      { category: "Tiere & Natur", solution: "DIE BIENE FLIEGT VON BLUETE ZU BLUETE" },
+      { category: "Tiere & Natur", solution: "DER HIRSCH ROEHRT IM HERBST" }
+    ];
+
+    const consonants = "BCDFGHJKLMNPQRSTVWXYZ".split("");
+    const vowels = "AEIOU".split("");
+    const allLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    const soundFiles = {
+      spin: "sounds/Walze dreht.mp3",
+      stop: "sounds/Walze stoppt.mp3",
+      correct: "sounds/Richtiger Buchstabe.mp3",
+      wrong: "sounds/Falscher Buchstabe.mp3",
+      timer: "sounds/Timer fast abgelaufen.mp3",
+      win: "sounds/Runde gewonnen.mp3"
+    };
+    const sounds = Object.fromEntries(
+      Object.entries(soundFiles).map(([key, path]) => [key, new Audio(encodeURI(path))])
+    );
+    sounds.timer.loop = true;
+    sounds.spin.volume = 0.72;
+    sounds.stop.volume = 0.72;
+    sounds.correct.volume = 0.78;
+    sounds.wrong.volume = 0.7;
+    sounds.timer.volume = 0.35;
+    sounds.win.volume = 0.78;
+    const state = {
+      players: [],
+      active: 0,
+      puzzleIndex: 0,
+      puzzleBag: [],
+      puzzle: puzzles[0],
+      revealed: new Set(),
+      used: new Set(),
+      spinning: false,
+      charging: false,
+      chargeId: null,
+      chargeStarted: 0,
+      spinPower: 0,
+      reelCursor: consonants.length * 8,
+      phase: "setup",
+      time: 0,
+      timerId: null,
+      timerRunning: false,
+      timerEndsAt: 0,
+      difficulty: "erwachsen",
+      roundTime: 10,
+      clockFields: 11,
+      clockRIn: 20,
+      clockROut: 43,
+      jokerUsed: false,
+      playMode: "local",
+      roomCode: ""
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const network = {
+      socket: null,
+      connected: false,
+      role: "local",
+      roomReady: false,
+      applyingSnapshot: false
+    };
+
+    function normalizeText(text) {
+      return text
+        .toUpperCase()
+        .replaceAll("Ä", "AE")
+        .replaceAll("Ö", "OE")
+        .replaceAll("Ü", "UE")
+        .replaceAll("ẞ", "SS")
+        .replaceAll("ß", "SS")
+        .replace(/[^A-Z0-9]/g, "");
+    }
+
+    function activePlayer() {
+      return state.players[state.active];
+    }
+
+    function setupWheel() {
+      const wheel = $("letterWheel");
+      wheel.innerHTML = "";
+      const repeats = 24;
+      for (let repeat = 0; repeat < repeats; repeat += 1) {
+        consonants.forEach((letter) => {
+          const item = document.createElement("div");
+          item.className = "wheel-letter";
+          item.textContent = letter;
+          wheel.appendChild(item);
+        });
+      }
+      window.requestAnimationFrame(() => centerReelOn(state.reelCursor, false));
+    }
+
+    function isOnlineMode() {
+      return state.playMode === "wlan" || state.playMode === "mobile";
+    }
+
+    function setNetworkStatus(text) {
+      const status = $("networkStatus");
+      if (status) status.textContent = text;
+    }
+
+    function connectNetwork() {
+      if (!isOnlineMode()) return Promise.resolve(false);
+      if (typeof io !== "function") {
+        setNetworkStatus("Online-Server nicht gefunden. Bitte ueber Render starten.");
+        return Promise.resolve(false);
+      }
+      if (network.socket?.connected) return Promise.resolve(true);
+      if (!network.socket) {
+        network.socket = io();
+        network.socket.on("connect", () => {
+          network.connected = true;
+          setNetworkStatus("Mit dem Online-Server verbunden.");
+        });
+        network.socket.on("disconnect", () => {
+          network.connected = false;
+          setNetworkStatus("Verbindung getrennt. Der Raum bleibt kurz erhalten.");
+        });
+        network.socket.on("state-updated", (snapshot) => {
+          applySnapshot(snapshot);
+        });
+      }
+      return new Promise((resolve) => {
+        const done = () => resolve(true);
+        network.socket.once("connect", done);
+        network.socket.once("connect_error", () => {
+          setNetworkStatus("Verbindung zum Server fehlgeschlagen.");
+          resolve(false);
+        });
+        if (!network.socket.connected) network.socket.connect();
+        window.setTimeout(() => resolve(network.socket?.connected || false), 2500);
+      });
+    }
+
+    function createOnlineRoom() {
+      return connectNetwork().then((connected) => new Promise((resolve) => {
+        if (!connected) return resolve(false);
+        if (network.roomReady && network.role === "host") return resolve(true);
+        ensureRoomCode();
+        network.socket.emit("create-room", {
+          code: state.roomCode,
+          mode: state.playMode
+        }, (reply = {}) => {
+          if (!reply.ok) {
+            setNetworkStatus(reply.error || "Raum konnte nicht erstellt werden.");
+            return resolve(false);
+          }
+          state.roomCode = reply.code || state.roomCode;
+          network.role = "host";
+          network.roomReady = true;
+          $("setupRoomCode").textContent = state.roomCode;
+          $("joinCodeInput").value = state.roomCode;
+          setNetworkStatus(`${connectionShortLabel()}-Raum erstellt. Zweiter Spieler gibt diesen Code ein.`);
+          resolve(true);
+        });
+      }));
+    }
+
+    function joinOnlineRoom() {
+      return connectNetwork().then((connected) => new Promise((resolve) => {
+        if (!connected) return resolve(false);
+        syncJoinCode();
+        if (!state.roomCode) {
+          setNetworkStatus("Bitte zuerst den Code vom anderen Spieler eingeben.");
+          return resolve(false);
+        }
+        network.socket.emit("join-room", {
+          code: state.roomCode,
+          mode: state.playMode
+        }, (reply = {}) => {
+          if (!reply.ok) {
+            setNetworkStatus(reply.error || "Raum nicht gefunden.");
+            return resolve(false);
+          }
+          network.role = reply.role || "guest";
+          network.roomReady = true;
+          $("setupRoomCode").textContent = state.roomCode;
+          $("roomCode").textContent = `${connectionShortLabel()} ${state.roomCode}`;
+          setNetworkStatus(reply.snapshot ? "Verbunden. Spielstand wurde geladen." : "Verbunden. Warte, bis der erste Spieler startet.");
+          if (reply.snapshot) applySnapshot(reply.snapshot);
+          resolve(true);
+        });
+      }));
+    }
+
+    function currentTimerValue() {
+      if (!state.timerRunning || !state.timerEndsAt) return state.time || 0;
+      return Math.max(0, Math.ceil((state.timerEndsAt - Date.now()) / 1000));
+    }
+
+    function serializeState() {
+      return {
+        players: state.players,
+        active: state.active,
+        puzzleIndex: state.puzzleIndex,
+        puzzleBag: state.puzzleBag,
+        revealed: Array.from(state.revealed),
+        used: Array.from(state.used),
+        reelCursor: state.reelCursor,
+        spinning: state.spinning,
+        charging: state.charging,
+        spinPower: state.spinPower,
+        phase: state.phase,
+        difficulty: state.difficulty,
+        roundTime: state.roundTime,
+        clockFields: state.clockFields,
+        clockRIn: state.clockRIn,
+        clockROut: state.clockROut,
+        playMode: state.playMode,
+        roomCode: state.roomCode,
+        spinResult: $("spinResult").textContent,
+        timerRunning: state.timerRunning,
+        time: currentTimerValue(),
+        timerEndsAt: state.timerEndsAt,
+        winnerVisible: $("winnerOverlay").classList.contains("show"),
+        winnerName: $("winnerName").textContent
+      };
+    }
+
+    function publishState() {
+      if (!isOnlineMode() || network.applyingSnapshot || !network.socket?.connected || !state.roomCode) return;
+      network.socket.emit("sync-state", {
+        code: state.roomCode,
+        snapshot: serializeState()
+      });
+    }
+
+    function applySnapshot(snapshot) {
+      if (!snapshot) return;
+      network.applyingSnapshot = true;
+      stopTimer();
+      state.players = Array.isArray(snapshot.players) ? snapshot.players : [];
+      state.active = snapshot.active || 0;
+      state.puzzleIndex = snapshot.puzzleIndex || 0;
+      state.puzzleBag = Array.isArray(snapshot.puzzleBag) ? snapshot.puzzleBag : [];
+      state.puzzle = puzzles[state.puzzleIndex] || puzzles[0];
+      state.revealed = new Set(snapshot.revealed || []);
+      state.used = new Set(snapshot.used || []);
+      state.reelCursor = snapshot.reelCursor || consonants.length * 8;
+      if (state.chargeId) {
+        window.clearInterval(state.chargeId);
+        state.chargeId = null;
+      }
+      $("spinBtn").classList.remove("charging");
+      state.spinning = !!snapshot.spinning;
+      state.charging = !!snapshot.charging;
+      state.spinPower = snapshot.spinPower || 0;
+      state.phase = snapshot.phase || "spin";
+      state.difficulty = snapshot.difficulty || state.difficulty;
+      state.roundTime = snapshot.roundTime || state.roundTime;
+      state.clockFields = snapshot.clockFields || state.clockFields;
+      state.clockRIn = snapshot.clockRIn || state.clockRIn;
+      state.clockROut = snapshot.clockROut || state.clockROut;
+      state.playMode = snapshot.playMode || state.playMode;
+      state.roomCode = snapshot.roomCode || state.roomCode;
+      $("setup").classList.add("ui-hidden");
+      $("roomCode").textContent = isOnlineMode() ? `${connectionShortLabel()} ${state.roomCode}` : "Lokal";
+      $("spinResult").textContent = snapshot.spinResult || "Spielstand geladen.";
+      applyDifficultyDial();
+      centerReelOn(state.reelCursor, false);
+      renderPower();
+      if (snapshot.winnerVisible) {
+        $("winnerName").textContent = snapshot.winnerName || "";
+        $("winnerOverlay").classList.add("show");
+        $("winnerOverlay").setAttribute("aria-hidden", "false");
+      } else {
+        hideWinner();
+      }
+      renderAll();
+      if (snapshot.timerRunning) {
+        const remaining = Number.isFinite(snapshot.time) ? snapshot.time : 0;
+        if (remaining > 0) startTimer(remaining);
+      }
+      network.applyingSnapshot = false;
+    }
+
+    function canAdvanceExpiredTimer() {
+      return !isOnlineMode() || network.role === "host";
+    }
+
+    async function startGame() {
+      if (isOnlineMode()) {
+        syncJoinCode();
+        if (network.role !== "host") {
+          await joinOnlineRoom();
+          return;
+        }
+        const roomReady = await createOnlineRoom();
+        if (!roomReady) return;
+      }
+      const names = [1, 2, 3, 4]
+        .map((n) => $(`name${n}`).value.trim())
+        .filter(Boolean);
+      if (names.length < 2) {
+        alert("Bitte mindestens zwei Spieler eintragen.");
+        return;
+      }
+      state.players = names.map((name) => ({ name, score: 30, buys: 0, jokerUsed: false }));
+      state.active = 0;
+      state.puzzleBag = [];
+      applyDifficultyDial();
+      state.puzzleIndex = drawPuzzleIndex();
+      syncJoinCode();
+      if (state.playMode === "local") {
+        state.roomCode = "";
+        $("roomCode").textContent = "Lokal";
+      } else {
+        ensureRoomCode();
+        $("roomCode").textContent = `${connectionShortLabel()} ${state.roomCode}`;
+      }
+      $("setup").classList.add("ui-hidden");
+      newRound(false);
+    }
+
+    function connectionShortLabel() {
+      return state.playMode === "mobile" ? "Mobil" : "WLAN";
+    }
+
+    function roomCodeLength() {
+      return state.playMode === "mobile" ? 6 : 4;
+    }
+
+    function makeRoomCode() {
+      const digits = roomCodeLength();
+      const min = 10 ** (digits - 1);
+      const max = (10 ** digits) - 1;
+      return String(Math.floor(min + Math.random() * (max - min + 1)));
+    }
+
+    function ensureRoomCode() {
+      if (!state.roomCode || state.roomCode.length !== roomCodeLength()) {
+        state.roomCode = makeRoomCode();
+      }
+      $("setupRoomCode").textContent = state.roomCode;
+      $("joinCodeInput").value = state.roomCode;
+    }
+
+    function syncJoinCode() {
+      const code = $("joinCodeInput").value.replace(/\D/g, "").slice(0, roomCodeLength());
+      $("joinCodeInput").value = code;
+      if (code.length === roomCodeLength()) {
+        state.roomCode = code;
+        $("setupRoomCode").textContent = code;
+      }
+    }
+
+    function updateNetworkSettings() {
+      const networkSettings = $("networkSettings");
+      const status = $("networkStatus");
+      if (state.playMode === "local") {
+        state.roomCode = "";
+        networkSettings.classList.remove("open");
+        $("setupRoomCode").textContent = "----";
+        $("joinCodeInput").value = "";
+        status.textContent = "Lokales Spiel an einem Geraet.";
+        return;
+      }
+      networkSettings.classList.add("open");
+      const label = state.playMode === "mobile" ? "Mobile-Daten-Code" : "WLAN-Code";
+      if (state.roomCode) {
+        $("setupRoomCode").textContent = state.roomCode;
+        $("joinCodeInput").value = state.roomCode;
+        status.textContent = `${label} bereit. Der zweite Spieler gibt diesen Code in seinen Einstellungen ein.`;
+      } else {
+        $("setupRoomCode").textContent = "----";
+        $("joinCodeInput").value = "";
+        status.textContent = `${label}: Code erstellen oder Code vom anderen Spieler eingeben.`;
+      }
+    }
+
+    // Schwierigkeitsgrade: welche Kategorien je Altersstufe vorkommen (kumulativ aufgebaut).
+    // Erwachsene = alle Kategorien (null). Kinder bekommen 20 Sek. (Kinder-Ziffernblatt 20..0),
+    // Jugendliche und Erwachsene 10 Sek. (Ziffernblatt 10..0) – siehe DIALS.
+    const KINDER_CATS = ["Tiere & Natur", "Märchen", "Essen & Trinken", "Lustige Sätze", "Alltag", "Spiel & Spaß"];
+    const JUGEND_CATS = KINDER_CATS.concat(["Filmtitel", "Serien & TV", "Songtitel", "Sport", "Orte in Deutschland", "Urlaub & Reise"]);
+    const DIFFICULTIES = {
+      kinder: { label: "Kinder", cats: new Set(KINDER_CATS) },
+      jugend: { label: "Jugendliche", cats: new Set(JUGEND_CATS) },
+      erwachsen: { label: "Erwachsene", cats: null }
+    };
+
+    function allowedPuzzleIndices() {
+      const diff = DIFFICULTIES[state.difficulty] || DIFFICULTIES.erwachsen;
+      const indices = puzzles
+        .map((_, i) => i)
+        .filter((i) => !diff.cats || diff.cats.has(puzzles[i].category));
+      return indices.length ? indices : puzzles.map((_, i) => i);
+    }
+
+    // Shuffle-Bag: zieht jeden Begriff der Stufe genau einmal, bevor sich etwas wiederholt.
+    // Beim Nachfuellen wird vermieden, dass derselbe Begriff direkt zweimal kommt.
+    function drawPuzzleIndex() {
+      if (state.puzzleBag.length === 0) {
+        const indices = allowedPuzzleIndices();
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        if (indices.length > 1 && indices[0] === state.puzzleIndex) {
+          [indices[0], indices[1]] = [indices[1], indices[0]];
+        }
+        state.puzzleBag = indices;
+      }
+      return state.puzzleBag.shift();
+    }
+
+    function newRound(next = true) {
+      stopTimer();
+      if (next) {
+        state.puzzleIndex = drawPuzzleIndex();
+      }
+      state.puzzle = puzzles[state.puzzleIndex];
+      state.revealed = new Set();
+      state.used = new Set();
+      state.reelCursor = consonants.length * 8;
+      centerReelOn(state.reelCursor, false);
+      state.players.forEach((player) => {
+        player.buys = 0;
+        player.jokerUsed = false;
+      });
+      hideWinner();
+      state.phase = "spin";
+      $("spinResult").textContent = "Drehen halten, loslassen zum Start.";
+      renderAll();
+      startTimer(state.roundTime);
+      publishState();
+    }
+
+    function spin(power = 0.65) {
+      if (state.phase !== "spin" || state.spinning) return;
+      const available = consonants.filter((letter) => !state.used.has(letter));
+      if (!available.length) {
+        $("spinResult").textContent = "Alle Konsonanten sind verbraucht. Versuche zu loesen.";
+        return;
+      }
+      state.spinning = true;
+      state.spinPower = 0;
+      renderPower();
+      stopTimer();
+      playSound("spin");
+      if (state.reelCursor > consonants.length * 18) {
+        state.reelCursor = consonants.length * 8 + (state.reelCursor % consonants.length);
+        centerReelOn(state.reelCursor, false);
+      }
+      const currentIndex = state.reelCursor % consonants.length;
+      const normalizedPower = Math.max(0.08, Math.min(1, power));
+      let advance = 4 + Math.round(normalizedPower * consonants.length * 4);
+      let letter = consonants[(currentIndex + advance) % consonants.length];
+      while (state.used.has(letter)) {
+        advance += 1;
+        letter = consonants[(currentIndex + advance) % consonants.length];
+      }
+      const duration = Math.round(900 + normalizedPower * 2400);
+      state.reelCursor += advance;
+      centerReelOn(state.reelCursor, true, duration);
+      $("spinResult").textContent = "Die Walze dreht ...";
+      renderButtons();
+      publishState();
+
+      window.setTimeout(() => {
+        state.spinning = false;
+        stopSound("spin");
+        playSound("stop");
+        applyLetter(letter, "spin");
+      }, duration + 180);
+    }
+
+    function startSpinCharge(event) {
+      if (state.phase !== "spin" || state.spinning || state.charging) return;
+      if (event) event.preventDefault();
+      if (event?.currentTarget?.setPointerCapture && event.pointerId !== undefined) {
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        } catch (_) {}
+      }
+      state.charging = true;
+      state.chargeStarted = performance.now();
+      state.spinPower = 0.08;
+      $("spinBtn").classList.add("charging");
+      $("spinResult").textContent = "Loslassen zum Drehen.";
+      stopTimer();
+      renderPower();
+      renderButtons();
+      state.chargeId = window.setInterval(updateSpinCharge, 40);
+      publishState();
+    }
+
+    function updateSpinCharge() {
+      const elapsed = performance.now() - state.chargeStarted;
+      state.spinPower = Math.min(1, 0.08 + elapsed / 1300);
+      renderPower();
+    }
+
+    function releaseSpinCharge(event) {
+      if (!state.charging) return;
+      if (event) event.preventDefault();
+      const power = state.spinPower;
+      clearSpinCharge();
+      spin(power);
+    }
+
+    function cancelSpinCharge() {
+      if (!state.charging) return;
+      clearSpinCharge();
+      state.spinPower = 0;
+      renderPower();
+      if (state.phase === "spin" && !state.spinning) {
+        startTimer(state.roundTime);
+      }
+    }
+
+    function clearSpinCharge() {
+      state.charging = false;
+      $("spinBtn").classList.remove("charging");
+      if (state.chargeId) {
+        window.clearInterval(state.chargeId);
+        state.chargeId = null;
+      }
+      renderButtons();
+    }
+
+    function applyLetter(letter, source) {
+      const player = activePlayer();
+      state.used.add(letter);
+      const count = state.puzzle.solution.split("").filter((char) => char === letter).length;
+      if (count > 0) {
+        playSound("correct");
+        state.revealed.add(letter);
+        const points = source === "buy" ? 0 : count * 20;
+        player.score += points;
+        $("spinResult").textContent = source === "buy"
+          ? `${letter} gekauft: ${count} Treffer.`
+          : `${letter}: ${count} Treffer, +${points} Punkte.`;
+        if (isSolved()) {
+          finishRound(player);
+          return;
+        }
+        state.phase = "spin";
+        renderAll();
+        startTimer(state.roundTime);
+        publishState();
+      } else {
+        playSound("wrong");
+        $("spinResult").textContent = `${letter} ist nicht dabei.`;
+        nextPlayer();
+      }
+    }
+
+    function openKeyboard() {
+      const player = activePlayer();
+      if (!player || player.score < 10 || player.buys >= 3 || state.phase === "done") return;
+      $("keyboardPanel").classList.add("open");
+      renderVowelKeyboard();
+    }
+
+    function buyVowel(letter) {
+      const player = activePlayer();
+      if (state.used.has(letter) || player.score < 10 || player.buys >= 3) return;
+      player.score -= 10;
+      player.buys += 1;
+      $("keyboardPanel").classList.remove("open");
+      applyLetter(letter, "buy");
+    }
+
+    function openSolve() {
+      if (state.phase === "setup" || state.phase === "done") return;
+      stopTimer();
+      $("solveInput").value = "";
+      $("solvePanel").classList.add("open");
+      window.setTimeout(() => $("solveInput").focus(), 0);
+    }
+
+    function cancelSolve() {
+      $("solvePanel").classList.remove("open");
+      if (state.phase === "spin" && !state.spinning) {
+        startTimer(state.roundTime);
+      }
+    }
+
+    function submitSolve() {
+      const guess = normalizeText($("solveInput").value);
+      if (!guess) return;
+      $("solvePanel").classList.remove("open");
+      if (guess === normalizeText(state.puzzle.solution)) {
+        activePlayer().score += 100;
+        finishRound(activePlayer());
+      } else {
+        playSound("wrong");
+        $("spinResult").textContent = "Leider falsch.";
+        nextPlayer();
+      }
+    }
+
+    function finishRound(player) {
+      stopTimer();
+      playSound("win");
+      for (const char of state.puzzle.solution) {
+        if (/[A-Z]/.test(char)) state.revealed.add(char);
+      }
+      state.phase = "done";
+      $("spinResult").textContent = `${player.name} loest: ${state.puzzle.solution}`;
+      renderAll();
+      showWinner(player);
+      publishState();
+      window.setTimeout(() => {
+        state.active = (state.active + 1) % state.players.length;
+        newRound(true);
+      }, 2800);
+    }
+
+    function nextPlayer() {
+      stopTimer();
+      $("keyboardPanel").classList.remove("open");
+      $("solvePanel").classList.remove("open");
+      state.active = (state.active + 1) % state.players.length;
+      state.phase = "spin";
+      $("spinResult").textContent = `${activePlayer().name} ist dran.`;
+      renderAll();
+      startTimer(state.roundTime);
+      publishState();
+    }
+
+    function startTimer(seconds) {
+      stopTimer();
+      state.time = seconds || state.roundTime || 10;
+      state.timerRunning = true;
+      state.timerEndsAt = Date.now() + state.time * 1000;
+      renderTimer();
+      state.timerId = window.setInterval(() => {
+        state.time -= 1;
+        renderTimer();
+        if (state.time === 5) {
+          playSound("timer");
+        }
+        if (state.time <= 0) {
+          // Feld 0 (rot) noch kurz leuchten lassen, dann naechster Spieler
+          clearInterval(state.timerId);
+          state.timerId = null;
+          stopSound("timer");
+          state.time = 0;
+          state.timerRunning = false;
+          state.timerEndsAt = 0;
+          renderTimer();
+          $("spinResult").textContent = "Zeit abgelaufen.";
+          if (canAdvanceExpiredTimer()) {
+            setTimeout(nextPlayer, 750);
+          }
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+      stopSound("timer");
+      state.time = 0;
+      state.timerRunning = false;
+      state.timerEndsAt = 0;
+      renderTimer();
+    }
+
+    function isSolved() {
+      return state.puzzle.solution.split("").every((char) => !/[A-Z]/.test(char) || state.revealed.has(char));
+    }
+
+    const CATEGORY_ICONS = {
+      "Filmtitel": "img/film clapperboard.png",
+      "Serien & TV": "img/film clapperboard.png",
+      "Songtitel": "img/musical note.png",
+      "Tiere & Natur": "img/paw print.png",
+      "Essen & Trinken": "img/cake slice.png",
+      "Märchen": "img/castle.png",
+      "Orte in Deutschland": "img/castle.png",
+      "Orte in Europa": "img/castle.png",
+      "Sehenswürdigkeit": "img/castle.png"
+    };
+
+    function renderCategoryIcon() {
+      const icon = $("categoryIcon");
+      const src = CATEGORY_ICONS[state.puzzle.category];
+      if (src) {
+        icon.src = encodeURI(src);
+        icon.style.display = "block";
+      } else {
+        icon.removeAttribute("src");
+        icon.style.display = "none";
+      }
+    }
+
+    function renderAll() {
+      $("categoryText").textContent = state.puzzle.category;
+      $("activePlayer").textContent = state.players.length ? activePlayer().name : "---";
+      renderCategoryIcon();
+      renderPuzzle();
+      renderPlayers();
+      renderButtons();
+      renderTimer();
+    }
+
+    function renderPuzzle() {
+      const puzzle = $("puzzle");
+      puzzle.innerHTML = "";
+      const words = state.puzzle.solution.split(" ");
+      fitPuzzleTiles(puzzle, words);
+      words.forEach((word, wordIndex) => {
+        if (wordIndex > 0) {
+          const spacer = document.createElement("div");
+          spacer.className = "tile space";
+          puzzle.appendChild(spacer);
+        }
+        const wordNode = document.createElement("div");
+        wordNode.className = "word";
+        word.split("").forEach((char) => {
+          const tile = document.createElement("div");
+          if (/[A-Z]/.test(char)) {
+            tile.className = state.revealed.has(char) ? "tile" : "tile hidden";
+            tile.textContent = state.revealed.has(char) ? char : "";
+          } else {
+            tile.className = "tile";
+            tile.textContent = char;
+          }
+          wordNode.appendChild(tile);
+        });
+        puzzle.appendChild(wordNode);
+      });
+    }
+
+    function fitPuzzleTiles(puzzle, words) {
+      const availableWidth = Math.max(220, puzzle.clientWidth - 28);
+      const availableHeight = Math.max(90, puzzle.clientHeight - 26);
+      let width = 39;
+      for (; width >= 14; width -= 1) {
+        const gap = Math.max(3, Math.min(7, Math.round(width * 0.18)));
+        const rows = estimatePuzzleRows(words, width, gap, availableWidth);
+        const height = Math.round(width * 1.22);
+        const totalHeight = rows * height + Math.max(0, rows - 1) * gap;
+        const longestFits = words.every((word) => word.length * width + Math.max(0, word.length - 1) * gap <= availableWidth);
+        if (longestFits && totalHeight <= availableHeight) break;
+      }
+      width = Math.max(14, width);
+      const height = Math.round(width * 1.22);
+      const gap = Math.max(3, Math.min(7, Math.round(width * 0.18)));
+      const font = Math.max(0.68, Math.min(1.52, width / 25));
+      puzzle.style.gap = `${gap}px`;
+      puzzle.style.setProperty("--tile-w", `${width}px`);
+      puzzle.style.setProperty("--tile-h", `${height}px`);
+      puzzle.style.setProperty("--tile-font", `${font}rem`);
+    }
+
+    function estimatePuzzleRows(words, width, gap, availableWidth) {
+      let rows = 1;
+      let rowWidth = 0;
+      words.forEach((word, index) => {
+        const wordWidth = word.length * width + Math.max(0, word.length - 1) * gap;
+        const spacer = index === 0 ? 0 : Math.max(8, Math.round(width * 0.55)) + gap;
+        if (rowWidth > 0 && rowWidth + spacer + wordWidth > availableWidth) {
+          rows += 1;
+          rowWidth = wordWidth;
+        } else {
+          rowWidth += (rowWidth > 0 ? spacer : 0) + wordWidth;
+        }
+      });
+      return rows;
+    }
+
+    function centerReelOn(index, animate, duration = 2700) {
+      const wheel = $("letterWheel");
+      const windowNode = wheel.parentElement;
+      const item = wheel.children[index];
+      if (!item) return;
+      wheel.style.transition = animate ? `transform ${duration}ms cubic-bezier(0.12, 0.82, 0.18, 1)` : "none";
+      const offset = (windowNode.clientWidth / 2) - (item.offsetLeft + item.offsetWidth / 2);
+      wheel.style.setProperty("--offset", `${offset}px`);
+      if (!animate) {
+        wheel.offsetHeight;
+        wheel.style.transition = "transform 2.7s cubic-bezier(0.12, 0.82, 0.18, 1)";
+      }
+    }
+
+    function renderPlayers() {
+      const players = $("players");
+      players.innerHTML = "";
+      state.players.forEach((player, index) => {
+        const card = document.createElement("div");
+        card.className = `player${index === state.active ? " active" : ""}`;
+        card.innerHTML = `
+          <div class="player-name">${escapeHtml(player.name)}</div>
+          <div class="score">${player.score}</div>
+          <div class="buys">Kaeufe ${player.buys}/3</div>
+        `;
+        players.appendChild(card);
+      });
+    }
+
+    function renderButtons() {
+      const player = state.players.length ? activePlayer() : null;
+      $("spinBtn").disabled = state.phase !== "spin" || state.spinning;
+      $("buyBtn").disabled = !player || state.spinning || state.charging || state.phase === "done" || player.score < 10 || player.buys >= 3;
+      $("solveBtn").disabled = !player || state.spinning || state.charging || state.phase === "done";
+      const joker = $("jokerBtn");
+      if (joker) joker.disabled = !player || state.spinning || state.charging || state.phase !== "spin" || player.jokerUsed;
+    }
+
+    // Joker: deckt einmal pro Spieler und Runde einen verdeckten Buchstaben gratis auf.
+    function useJoker() {
+      const player = activePlayer();
+      if (!player || player.jokerUsed || state.phase !== "spin" || state.spinning || state.charging) return;
+      const hidden = Array.from(new Set(
+        state.puzzle.solution.split("").filter((c) => /[A-Z]/.test(c) && !state.revealed.has(c))
+      ));
+      if (!hidden.length) return;
+      const letter = hidden[Math.floor(Math.random() * hidden.length)];
+      player.jokerUsed = true;
+      state.used.add(letter);
+      state.revealed.add(letter);
+      playSound("correct");
+      const count = state.puzzle.solution.split("").filter((c) => c === letter).length;
+      $("spinResult").textContent = `Joker: ${letter} aufgedeckt (${count}x).`;
+      if (isSolved()) {
+        finishRound(player);
+        return;
+      }
+      renderAll();
+      publishState();
+    }
+
+    function showWinner(player) {
+      $("winnerName").textContent = `${player.name} gewinnt die Runde!`;
+      const overlay = $("winnerOverlay");
+      overlay.classList.add("show");
+      overlay.setAttribute("aria-hidden", "false");
+    }
+
+    function hideWinner() {
+      const overlay = $("winnerOverlay");
+      if (!overlay) return;
+      overlay.classList.remove("show");
+      overlay.setAttribute("aria-hidden", "true");
+    }
+
+    // Ziffernblatt je Schwierigkeit: Bild, Sekunden, Felderzahl und Kranz-Radien.
+    // Kinder: 21 Felder (20..0), 20 Sek. Sonst: 11 Felder (10..0), 10 Sek.
+    const DIALS = {
+      kinder:    { image: "img/Uhr-Ziffernblatt_kinder.png", time: 20, fields: 21, rIn: 28, rOut: 45 },
+      jugend:    { image: "img/Uhr-Ziffernblatt.png",        time: 10, fields: 11, rIn: 20, rOut: 43 },
+      erwachsen: { image: "img/Uhr-Ziffernblatt.png",        time: 10, fields: 11, rIn: 20, rOut: 43 }
+    };
+
+    function applyDifficultyDial() {
+      const d = DIALS[state.difficulty] || DIALS.erwachsen;
+      state.roundTime = d.time;
+      state.clockFields = d.fields;
+      state.clockRIn = d.rIn;
+      state.clockROut = d.rOut;
+      $("timer").style.backgroundImage = `url("${encodeURI(d.image)}")`;
+    }
+
+    // Punkt auf dem Kreis: Winkel im Uhrzeigersinn von 12 Uhr aus
+    function clockPoint(angleDeg, radius) {
+      const t = angleDeg * Math.PI / 180;
+      return [50 + radius * Math.sin(t), 50 - radius * Math.cos(t)];
+    }
+
+    // Tortenstueck fuer Zahl n (hoechste Zahl oben links, im UZS bis 0 oben rechts)
+    function clockWedge(n) {
+      const seg = 360 / (state.clockFields || 11);
+      const RO = state.clockROut || 43;
+      const RI = state.clockRIn || 20;
+      const a1 = n * seg;
+      const a2 = (n + 1) * seg;
+      const [ox1, oy1] = clockPoint(a1, RO);
+      const [ox2, oy2] = clockPoint(a2, RO);
+      const [ix2, iy2] = clockPoint(a2, RI);
+      const [ix1, iy1] = clockPoint(a1, RI);
+      return `M${ox1.toFixed(2)} ${oy1.toFixed(2)} ` +
+             `A${RO} ${RO} 0 0 1 ${ox2.toFixed(2)} ${oy2.toFixed(2)} ` +
+             `L${ix2.toFixed(2)} ${iy2.toFixed(2)} ` +
+             `A${RI} ${RI} 0 0 0 ${ix1.toFixed(2)} ${iy1.toFixed(2)} Z`;
+    }
+
+    // Das Feld der aktuellen Restsekunde leuchtet auf; zaehlt herunter bis 0; kein Zeiger.
+    function renderTimer() {
+      const highlight = $("clockHighlight");
+      if (!highlight) return;
+      const n = state.time;
+      if (state.timerRunning && n >= 0 && n <= (state.roundTime || 10)) {
+        highlight.setAttribute("d", clockWedge(n));
+        highlight.style.display = "";
+      } else {
+        highlight.style.display = "none";
+      }
+    }
+
+    function renderPower() {
+      $("powerFill").style.setProperty("--power", state.spinPower || 0);
+    }
+
+    function playSound(name) {
+      const sound = sounds[name];
+      if (!sound) return;
+      try {
+        sound.pause();
+        sound.currentTime = 0;
+        const playPromise = sound.play();
+        if (playPromise) playPromise.catch(() => {});
+      } catch (_) {}
+    }
+
+    function stopSound(name) {
+      const sound = sounds[name];
+      if (!sound) return;
+      try {
+        sound.pause();
+        sound.currentTime = 0;
+      } catch (_) {}
+    }
+
+    function renderVowelKeyboard() {
+      const keyboard = $("vowelKeyboard");
+      keyboard.innerHTML = "";
+      vowels.forEach((letter) => {
+        const key = document.createElement("button");
+        key.className = `key${state.used.has(letter) ? " used" : ""}`;
+        key.textContent = letter;
+        key.disabled = state.used.has(letter);
+        key.addEventListener("click", () => buyVowel(letter));
+        keyboard.appendChild(key);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function blockGameTextSelection(event) {
+      if (event.target.closest("input")) return;
+      if (event.target.closest(".app, .btn, .power")) {
+        event.preventDefault();
+      }
+    }
+
+    document.addEventListener("contextmenu", blockGameTextSelection);
+    document.addEventListener("selectstart", blockGameTextSelection);
+    document.addEventListener("dragstart", blockGameTextSelection);
+
+    $("difficultyRow").addEventListener("click", (event) => {
+      const btn = event.target.closest(".diff-btn");
+      if (!btn) return;
+      state.difficulty = btn.dataset.diff;
+      state.puzzleBag = [];
+      document.querySelectorAll(".diff-btn").forEach((b) => b.classList.toggle("active", b === btn));
+    });
+
+    $("playModeRow").addEventListener("click", (event) => {
+      const btn = event.target.closest(".mode-btn");
+      if (!btn) return;
+      state.playMode = btn.dataset.mode;
+      state.roomCode = "";
+      network.role = state.playMode === "local" ? "local" : "";
+      network.roomReady = false;
+      $("joinCodeInput").maxLength = roomCodeLength();
+      document.querySelectorAll(".mode-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      updateNetworkSettings();
+    });
+
+    $("createRoomBtn").addEventListener("click", async () => {
+      state.roomCode = makeRoomCode();
+      network.roomReady = false;
+      $("setupRoomCode").textContent = state.roomCode;
+      $("joinCodeInput").value = state.roomCode;
+      network.role = "host";
+      setNetworkStatus(`${connectionShortLabel()}-Code wird erstellt ...`);
+      await createOnlineRoom();
+    });
+
+    $("joinCodeInput").addEventListener("input", () => {
+      network.role = "guest";
+      network.roomReady = false;
+      syncJoinCode();
+      const needed = roomCodeLength();
+      const current = $("joinCodeInput").value.length;
+      $("networkStatus").textContent = current === needed
+        ? `${connectionShortLabel()}-Code uebernommen.`
+        : `Noch ${needed - current} Ziffern eingeben.`;
+    });
+
+    $("jokerBtn").addEventListener("click", useJoker);
+
+    $("startBtn").addEventListener("click", startGame);
+    $("spinBtn").addEventListener("pointerdown", startSpinCharge);
+    window.addEventListener("pointerup", releaseSpinCharge);
+    window.addEventListener("pointercancel", cancelSpinCharge);
+    $("spinBtn").addEventListener("keydown", (event) => {
+      if ((event.key === " " || event.key === "Enter") && !state.charging) {
+        startSpinCharge(event);
+      }
+    });
+    $("spinBtn").addEventListener("keyup", (event) => {
+      if (event.key === " " || event.key === "Enter") {
+        releaseSpinCharge(event);
+      }
+    });
+    $("buyBtn").addEventListener("click", openKeyboard);
+    $("solveBtn").addEventListener("click", openSolve);
+    $("closeKeyboard").addEventListener("click", () => $("keyboardPanel").classList.remove("open"));
+    $("closeSolve").addEventListener("click", cancelSolve);
+    $("submitSolve").addEventListener("click", submitSolve);
+    $("solveInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") submitSolve();
+      if (event.key === "Escape") cancelSolve();
+    });
+
+    setupWheel();
+    updateNetworkSettings();
+    renderAll();
+  </script>
+</body>
+</html>
