@@ -249,7 +249,7 @@
     .category {
       position: relative;
       min-height: 48px;
-      padding: 8px 12px;
+      padding: 8px 58px 8px 12px;
       border-radius: 8px;
       background: linear-gradient(180deg, #fff9e8, #f5dc91);
       color: var(--ink);
@@ -260,13 +260,18 @@
       place-items: center;
     }
 
+    .category > div {
+      min-width: 0;
+      max-width: 100%;
+    }
+
     .category-icon {
       position: absolute;
-      right: 10px;
+      right: 12px;
       top: 50%;
       transform: translateY(-50%);
-      width: 44px;
-      height: 44px;
+      width: 38px;
+      height: 38px;
       object-fit: contain;
       filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
       display: none;
@@ -285,9 +290,10 @@
     .category strong {
       display: block;
       margin-top: 3px;
-      font-size: clamp(1.22rem, 6vw, 1.86rem);
-      line-height: 1;
+      font-size: clamp(1rem, 4.1vw, 1.38rem);
+      line-height: 1.04;
       font-weight: 950;
+      overflow-wrap: anywhere;
     }
 
     .puzzle {
@@ -514,6 +520,18 @@
       font-size: clamp(1.2rem, 6vw, 1.8rem);
       font-weight: 950;
       text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    }
+
+    .winner-actions {
+      display: none;
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+      gap: 10px;
+      width: min(86vw, 420px);
+      margin: 16px auto 0;
+    }
+
+    .winner-overlay.finished .winner-actions {
+      display: grid;
     }
 
     @keyframes winnerPop {
@@ -897,11 +915,16 @@
 
       .category {
         min-height: 42px;
-        padding: 6px 10px;
+        padding: 6px 52px 6px 10px;
       }
 
       .category strong {
-        font-size: 1.16rem;
+        font-size: 0.98rem;
+      }
+
+      .category-icon {
+        width: 34px;
+        height: 34px;
       }
 
       .current {
@@ -1043,6 +1066,10 @@
     <div class="winner-box">
       <img src="img/Sieger_Banner.png" alt="Sieger" class="winner-banner">
       <div id="winnerName" class="winner-name"></div>
+      <div class="winner-actions">
+        <button id="newGameBtn" type="button" class="btn primary">Neues Spiel</button>
+        <button id="backToMenuBtn" type="button" class="btn">Menue</button>
+      </div>
     </div>
   </div>
 
@@ -1383,7 +1410,8 @@
       correct: "sounds/Richtiger Buchstabe.mp3",
       wrong: "sounds/Falscher Buchstabe.mp3",
       timer: "sounds/Timer fast abgelaufen.mp3",
-      win: "sounds/Runde gewonnen.mp3"
+      win: "sounds/Runde gewonnen.mp3",
+      grandWin: "sounds/Grand Winner.mp3"
     };
     const sounds = Object.fromEntries(
       Object.entries(soundFiles).map(([key, path]) => [key, new Audio(encodeURI(path))])
@@ -1395,6 +1423,7 @@
     sounds.wrong.volume = 0.7;
     sounds.timer.volume = 0.35;
     sounds.win.volume = 0.78;
+    sounds.grandWin.volume = 0.82;
     const state = {
       players: [],
       active: 0,
@@ -1654,6 +1683,7 @@
         time: currentTimerValue(),
         timerEndsAt: state.timerEndsAt,
         winnerVisible: $("winnerOverlay").classList.contains("show"),
+        winnerFinished: $("winnerOverlay").classList.contains("finished"),
         winnerName: $("winnerName").textContent
       };
     }
@@ -1705,6 +1735,7 @@
       if (snapshot.winnerVisible) {
         $("winnerName").textContent = snapshot.winnerName || "";
         $("winnerOverlay").classList.add("show");
+        $("winnerOverlay").classList.toggle("finished", !!snapshot.winnerFinished);
         $("winnerOverlay").setAttribute("aria-hidden", "false");
       } else {
         hideWinner();
@@ -2103,6 +2134,8 @@
 
     function finishGame() {
       stopTimer();
+      stopSound("win");
+      playSound("grandWin");
       state.phase = "finished";
       const bestScore = Math.max(...state.players.map((player) => player.score));
       const winners = state.players.filter((player) => player.score === bestScore);
@@ -2113,7 +2146,7 @@
       renderAll();
       showWinner({ name: names }, winners.length > 1
         ? `Unentschieden: ${names}!`
-        : `Gesamtsieger: ${names}!`);
+        : `Gesamtsieger: ${names}!`, true);
       publishState();
     }
 
@@ -2126,6 +2159,47 @@
       $("spinResult").textContent = `${activePlayer().name} ist dran.`;
       renderAll();
       startTimer(state.roundTime);
+      publishState();
+    }
+
+    function restartMatch() {
+      if (!state.players.length) {
+        backToMenu();
+        return;
+      }
+      stopSound("grandWin");
+      stopTimer();
+      state.players.forEach((player) => {
+        player.score = 30;
+        player.buys = 0;
+        player.jokerUsed = false;
+      });
+      state.active = 0;
+      state.roundNumber = 1;
+      state.puzzleBag = [];
+      state.puzzleIndex = drawPuzzleIndex();
+      hideWinner();
+      applyDifficultyDial();
+      newRound(false);
+    }
+
+    function backToMenu() {
+      stopTimer();
+      stopSound("grandWin");
+      stopSound("win");
+      hideWinner();
+      $("keyboardPanel").classList.remove("open");
+      $("solvePanel").classList.remove("open");
+      $("setup").classList.remove("ui-hidden");
+      state.phase = "setup";
+      state.players = [];
+      state.active = 0;
+      state.roundNumber = 1;
+      state.revealed = new Set();
+      state.used = new Set();
+      $("roomCode").textContent = "----";
+      $("spinResult").textContent = "Drehen halten, loslassen zum Start.";
+      renderAll();
       publishState();
     }
 
@@ -2175,15 +2249,26 @@
     }
 
     const CATEGORY_ICONS = {
-      "Filmtitel": "img/film clapperboard.png",
-      "Serien & TV": "img/film clapperboard.png",
-      "Songtitel": "img/musical note.png",
-      "Tiere & Natur": "img/paw print.png",
+      "Alltag": "img/Kategorie-Alltag.png",
+      "Antiquitäten & Flohmarkt": "img/Kategorie-Antiquitaeten.png",
+      "Bauernregel": "img/Kategorie-Bauernregel.png",
+      "Berühmte Figuren": "img/Kategorie-Beruehmte-Figuren.png",
       "Essen & Trinken": "img/cake slice.png",
+      "Filmtitel": "img/film clapperboard.png",
+      "Lustige Sätze": "img/Kategorie-Lustige-Saetze.png",
       "Märchen": "img/castle.png",
       "Orte in Deutschland": "img/castle.png",
       "Orte in Europa": "img/castle.png",
-      "Sehenswürdigkeit": "img/castle.png"
+      "Redewendung": "img/Kategorie-Redewendung.png",
+      "Sehenswürdigkeit": "img/castle.png",
+      "Serien & TV": "img/film clapperboard.png",
+      "Songtitel": "img/musical note.png",
+      "Spiel & Spaß": "img/Kategorie-Spiel-Spass.png",
+      "Sport": "img/Kategorie-Sport.png",
+      "Sprichwort": "img/Kategorie-Sprichwort.png",
+      "Tiere & Natur": "img/paw print.png",
+      "Urlaub & Reise": "img/Kategorie-Urlaub-Reise.png",
+      "Zitate & Weisheiten": "img/Kategorie-Zitate-Weisheiten.png"
     };
 
     function renderCategoryIcon() {
@@ -2337,10 +2422,11 @@
       publishState();
     }
 
-    function showWinner(player, text) {
+    function showWinner(player, text, finished = false) {
       $("winnerName").textContent = text || `${player.name} gewinnt die Runde!`;
       const overlay = $("winnerOverlay");
       overlay.classList.add("show");
+      overlay.classList.toggle("finished", !!finished);
       overlay.setAttribute("aria-hidden", "false");
     }
 
@@ -2348,6 +2434,7 @@
       const overlay = $("winnerOverlay");
       if (!overlay) return;
       overlay.classList.remove("show");
+      overlay.classList.remove("finished");
       overlay.setAttribute("aria-hidden", "true");
     }
 
@@ -2541,6 +2628,8 @@
     $("jokerBtn").addEventListener("click", useJoker);
 
     $("startBtn").addEventListener("click", startGame);
+    $("newGameBtn").addEventListener("click", restartMatch);
+    $("backToMenuBtn").addEventListener("click", backToMenu);
     $("spinBtn").addEventListener("pointerdown", startSpinCharge);
     window.addEventListener("pointerup", releaseSpinCharge);
     window.addEventListener("pointercancel", cancelSpinCharge);
