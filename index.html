@@ -684,7 +684,7 @@
     }
 
     .setup.online .online-only {
-      display: block;
+      display: none;
     }
 
     .diff-label {
@@ -1076,7 +1076,7 @@
   <section id="setup" class="setup">
     <div class="card">
       <h2>Start</h2>
-      <p>2 bis 4 Spieler. Die letzte Runde ist eine Finalrunde mit doppelten Punkten.</p>
+      <p>Online: Name eingeben, Raum erstellen oder Code eingeben. Die Finalrunde zaehlt doppelt.</p>
       <div class="name-grid">
         <input id="name1" placeholder="Spieler 1" maxlength="12" aria-label="Spieler 1">
         <input id="name2" placeholder="Spieler 2" maxlength="12" aria-label="Spieler 2">
@@ -1106,18 +1106,18 @@
       </div>
       <div class="diff-label">Spielart</div>
       <div class="mode-row" id="playModeRow">
-        <button type="button" class="diff-btn mode-btn active" data-mode="local">An einem Geraet</button>
-        <button type="button" class="diff-btn mode-btn" data-mode="online">Online mit Code</button>
+        <button type="button" class="diff-btn mode-btn" data-mode="local">An einem Geraet</button>
+        <button type="button" class="diff-btn mode-btn active" data-mode="online">Online mit Code</button>
       </div>
       <div id="networkSettings" class="network-settings">
-        <div class="connection-code">Dein Code <span id="setupRoomCode">----</span></div>
+        <div class="connection-code">Raum-Code <span id="setupRoomCode">----</span></div>
         <div class="network-actions">
           <button id="createRoomBtn" type="button" class="mini-btn">Raum erstellen</button>
           <input id="joinCodeInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Code vom Mitspieler" aria-label="Spiel-Code eingeben">
           <button id="joinRoomBtn" type="button" class="mini-btn">Beitreten</button>
         </div>
         <div id="lobbyPlayers" class="lobby-list"><span>Noch kein Spieler im Raum.</span></div>
-        <div id="networkStatus" class="connection-status">Waehle Code erstellen oder gib den Code vom anderen Spieler ein.</div>
+        <div id="networkStatus" class="connection-status">Raum erstellen oder Code eingeben und beitreten.</div>
       </div>
       <button id="startBtn" class="btn primary">Spiel starten</button>
     </div>
@@ -1451,7 +1451,7 @@
       jokerUsed: false,
       targetRounds: 5,
       roundNumber: 1,
-      playMode: "local",
+      playMode: "online",
       roomCode: ""
     };
 
@@ -1460,7 +1460,8 @@
     const network = {
       socket: null,
       connected: false,
-      role: "local",
+      role: "",
+      playerId: "",
       roomReady: false,
       lobbyPlayers: [],
       gender: "",
@@ -1480,6 +1481,12 @@
 
     function activePlayer() {
       return state.players[state.active];
+    }
+
+    function isMyTurn() {
+      if (!isOnlineMode() || state.phase === "setup") return true;
+      const player = activePlayer();
+      return !!player && !!network.playerId && player.id === network.playerId;
     }
 
     function isFinalRound() {
@@ -1611,6 +1618,7 @@
           }
           state.roomCode = reply.code || state.roomCode;
           network.role = "host";
+          network.playerId = reply.playerId || network.playerId;
           network.roomReady = true;
           $("setupRoomCode").textContent = state.roomCode;
           $("joinCodeInput").value = state.roomCode;
@@ -1640,6 +1648,7 @@
             return resolve(false);
           }
           network.role = reply.role || "guest";
+          network.playerId = reply.playerId || network.playerId;
           network.roomReady = true;
           $("setupRoomCode").textContent = state.roomCode;
           $("roomCode").textContent = `${connectionShortLabel()} ${state.roomCode}`;
@@ -1778,6 +1787,7 @@
         return;
       }
       state.players = names.map((name, index) => ({
+        id: isOnlineMode() ? (network.lobbyPlayers[index]?.id || "") : `local-${index}`,
         name,
         gender: isOnlineMode() ? (network.lobbyPlayers[index]?.gender || "") : "",
         score: 30,
@@ -1946,6 +1956,7 @@
     }
 
     function spin(power = 0.65) {
+      if (!isMyTurn()) return;
       if (state.phase !== "spin" || state.spinning) return;
       const available = consonants.filter((letter) => !state.used.has(letter));
       if (!available.length) {
@@ -1985,6 +1996,7 @@
     }
 
     function startSpinCharge(event) {
+      if (!isMyTurn()) return;
       if (state.phase !== "spin" || state.spinning || state.charging) return;
       if (event) event.preventDefault();
       if (event?.currentTarget?.setPointerCapture && event.pointerId !== undefined) {
@@ -2067,6 +2079,7 @@
 
     function openKeyboard() {
       const player = activePlayer();
+      if (!isMyTurn()) return;
       if (!player || player.score < 10 || player.buys >= 3 || state.phase !== "spin") return;
       $("keyboardPanel").classList.add("open");
       renderVowelKeyboard();
@@ -2074,6 +2087,7 @@
 
     function buyVowel(letter) {
       const player = activePlayer();
+      if (!isMyTurn()) return;
       if (state.used.has(letter) || player.score < 10 || player.buys >= 3) return;
       player.score -= 10;
       player.buys += 1;
@@ -2082,6 +2096,7 @@
     }
 
     function openSolve() {
+      if (!isMyTurn()) return;
       if (state.phase !== "spin") return;
       stopTimer();
       $("solveInput").value = "";
@@ -2097,6 +2112,7 @@
     }
 
     function submitSolve() {
+      if (!isMyTurn()) return;
       const guess = normalizeText($("solveInput").value);
       if (!guess) return;
       $("solvePanel").classList.remove("open");
@@ -2392,16 +2408,18 @@
 
     function renderButtons() {
       const player = state.players.length ? activePlayer() : null;
-      $("spinBtn").disabled = state.phase !== "spin" || state.spinning;
-      $("buyBtn").disabled = !player || state.spinning || state.charging || state.phase !== "spin" || player.score < 10 || player.buys >= 3;
-      $("solveBtn").disabled = !player || state.spinning || state.charging || state.phase !== "spin";
+      const turnAllowed = isMyTurn();
+      $("spinBtn").disabled = !turnAllowed || state.phase !== "spin" || state.spinning;
+      $("buyBtn").disabled = !turnAllowed || !player || state.spinning || state.charging || state.phase !== "spin" || player.score < 10 || player.buys >= 3;
+      $("solveBtn").disabled = !turnAllowed || !player || state.spinning || state.charging || state.phase !== "spin";
       const joker = $("jokerBtn");
-      if (joker) joker.disabled = !player || state.spinning || state.charging || state.phase !== "spin" || player.jokerUsed;
+      if (joker) joker.disabled = !turnAllowed || !player || state.spinning || state.charging || state.phase !== "spin" || player.jokerUsed;
     }
 
     // Joker: deckt einmal pro Spieler und Runde einen verdeckten Buchstaben gratis auf.
     function useJoker() {
       const player = activePlayer();
+      if (!isMyTurn()) return;
       if (!player || player.jokerUsed || state.phase !== "spin" || state.spinning || state.charging) return;
       const hidden = Array.from(new Set(
         state.puzzle.solution.split("").filter((c) => /[A-Z]/.test(c) && !state.revealed.has(c))

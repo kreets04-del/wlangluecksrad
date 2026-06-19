@@ -44,6 +44,14 @@ function upsertPlayer(room, socket, payload) {
   const existing = room.players.findIndex((item) => item.id === socket.id);
   if (existing >= 0) {
     room.players[existing] = player;
+    return player;
+  }
+
+  const disconnectedSameName = room.players.findIndex((item) =>
+    item.name.toLowerCase() === player.name.toLowerCase() && !room.sockets.has(item.id)
+  );
+  if (disconnectedSameName >= 0) {
+    room.players[disconnectedSameName] = player;
   } else if (room.players.length < 4) {
     room.players.push(player);
   }
@@ -52,6 +60,7 @@ function upsertPlayer(room, socket, payload) {
 
 function publicPlayers(room) {
   return room.players.map((player) => ({
+    id: player.id,
     name: player.name,
     gender: player.gender
   }));
@@ -62,6 +71,7 @@ function roomInfo(room, socketId) {
     ok: true,
     code: room.code,
     role: room.hostId === socketId ? "host" : "guest",
+    playerId: socketId,
     players: publicPlayers(room),
     snapshot: room.snapshot || null
   };
