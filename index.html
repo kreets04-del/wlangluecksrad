@@ -467,7 +467,7 @@
 
     .actions {
       display: grid;
-      grid-template-columns: 1.25fr 1fr 1fr auto;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
       gap: 7px;
       min-height: 46px;
     }
@@ -1059,6 +1059,8 @@
       <button id="buyBtn" class="btn">Kaufen</button>
       <button id="solveBtn" class="btn red">Loesen</button>
       <button id="jokerBtn" class="joker-btn" aria-label="Joker: einen Buchstaben gratis aufdecken" title="Joker: einen Buchstaben gratis aufdecken"></button>
+      <button id="settingsBtn" class="btn">Einstellungen</button>
+      <button id="endGameBtn" class="btn red">Spiel beenden</button>
     </section>
   </main>
 
@@ -1437,6 +1439,7 @@
       chargeId: null,
       chargeStarted: 0,
       spinPower: 0,
+      spinDuration: 0,
       reelCursor: consonants.length * 8,
       phase: "setup",
       time: 0,
@@ -1487,6 +1490,10 @@
       if (!isOnlineMode() || state.phase === "setup") return true;
       const player = activePlayer();
       return !!player && !!network.playerId && player.id === network.playerId;
+    }
+
+    function canManageGame() {
+      return !isOnlineMode() || network.role === "host";
     }
 
     function isFinalRound() {
@@ -1677,6 +1684,7 @@
         spinning: state.spinning,
         charging: state.charging,
         spinPower: state.spinPower,
+        spinDuration: state.spinDuration || 0,
         phase: state.phase,
         targetRounds: state.targetRounds,
         roundNumber: state.roundNumber,
@@ -1708,6 +1716,9 @@
     function applySnapshot(snapshot) {
       if (!snapshot) return;
       network.applyingSnapshot = true;
+      const wasSpinning = state.spinning;
+      const previousReelCursor = state.reelCursor;
+      const winnerWasVisible = $("winnerOverlay").classList.contains("show");
       stopTimer();
       state.players = Array.isArray(snapshot.players) ? snapshot.players : [];
       state.active = snapshot.active || 0;
@@ -1725,6 +1736,7 @@
       state.spinning = !!snapshot.spinning;
       state.charging = !!snapshot.charging;
       state.spinPower = snapshot.spinPower || 0;
+      state.spinDuration = snapshot.spinDuration || 0;
       state.phase = snapshot.phase || "spin";
       state.targetRounds = snapshot.targetRounds || state.targetRounds;
       state.roundNumber = snapshot.roundNumber || state.roundNumber;
@@ -1735,17 +1747,35 @@
       state.clockROut = snapshot.clockROut || state.clockROut;
       state.playMode = snapshot.playMode || state.playMode;
       state.roomCode = snapshot.roomCode || state.roomCode;
-      $("setup").classList.add("ui-hidden");
+      if (state.phase === "setup") {
+        $("setup").classList.remove("ui-hidden");
+        updateSetupModeUi();
+        updateNetworkSettings();
+      } else {
+        $("setup").classList.add("ui-hidden");
+      }
       $("roomCode").textContent = isOnlineMode() ? `${connectionShortLabel()} ${state.roomCode}` : "Lokal";
       $("spinResult").textContent = snapshot.spinResult || "Spielstand geladen.";
       applyDifficultyDial();
-      centerReelOn(state.reelCursor, false);
+      if (state.spinning && previousReelCursor !== state.reelCursor) {
+        centerReelOn(state.reelCursor, true, Math.max(600, state.spinDuration || 1800));
+        if (!wasSpinning) playSound("spin");
+      } else {
+        centerReelOn(state.reelCursor, false);
+        if (wasSpinning && !state.spinning) {
+          stopSound("spin");
+          playSound("stop");
+        }
+      }
       renderPower();
       if (snapshot.winnerVisible) {
         $("winnerName").textContent = snapshot.winnerName || "";
         $("winnerOverlay").classList.add("show");
         $("winnerOverlay").classList.toggle("finished", !!snapshot.winnerFinished);
         $("winnerOverlay").setAttribute("aria-hidden", "false");
+        if (!winnerWasVisible) {
+          playSound(snapshot.winnerFinished ? "grandWin" : "win");
+        }
       } else {
         hideWinner();
       }
@@ -1981,6 +2011,7 @@
         letter = consonants[(currentIndex + advance) % consonants.length];
       }
       const duration = Math.round(900 + normalizedPower * 2400);
+      state.spinDuration = duration;
       state.reelCursor += advance;
       centerReelOn(state.reelCursor, true, duration);
       $("spinResult").textContent = "Die Walze dreht ...";
@@ -1989,6 +2020,7 @@
 
       window.setTimeout(() => {
         state.spinning = false;
+        state.spinDuration = 0;
         stopSound("spin");
         playSound("stop");
         applyLetter(letter, "spin");
@@ -2128,15 +2160,18 @@
 
     function finishRound(player) {
       stopTimer();
-      playSound("win");
       for (const char of state.puzzle.solution) {
         if (/[A-Z]/.test(char)) state.revealed.add(char);
       }
       state.phase = "done";
       $("spinResult").textContent = `${player.name} loest: ${state.puzzle.solution}`;
       renderAll();
-      showWinner(player);
       publishState();
+      window.setTimeout(() => {
+        playSound("win");
+        showWinner(player);
+        publishState();
+      }, 1600);
       window.setTimeout(() => {
         if (state.roundNumber >= state.targetRounds) {
           finishGame();
@@ -2145,7 +2180,7 @@
         state.roundNumber += 1;
         state.active = (state.active + 1) % state.players.length;
         newRound(true);
-      }, 2800);
+      }, 4800);
     }
 
     function finishGame() {
@@ -2197,6 +2232,19 @@
       hideWinner();
       applyDifficultyDial();
       newRound(false);
+    }
+
+    function openSettings() {
+      if (!canManageGame()) return;
+      backToMenu();
+    }
+
+    function endCurrentGame() {
+      if (!canManageGame() || !state.players.length || state.phase === "setup") return;
+      $("keyboardPanel").classList.remove("open");
+      $("solvePanel").classList.remove("open");
+      hideWinner();
+      finishGame();
     }
 
     function backToMenu() {
@@ -2414,6 +2462,8 @@
       $("solveBtn").disabled = !turnAllowed || !player || state.spinning || state.charging || state.phase !== "spin";
       const joker = $("jokerBtn");
       if (joker) joker.disabled = !turnAllowed || !player || state.spinning || state.charging || state.phase !== "spin" || player.jokerUsed;
+      $("settingsBtn").disabled = !canManageGame() || state.phase === "setup" || state.spinning || state.charging;
+      $("endGameBtn").disabled = !canManageGame() || !state.players.length || state.phase === "setup" || state.phase === "finished";
     }
 
     // Joker: deckt einmal pro Spieler und Runde einen verdeckten Buchstaben gratis auf.
@@ -2648,6 +2698,8 @@
     $("startBtn").addEventListener("click", startGame);
     $("newGameBtn").addEventListener("click", restartMatch);
     $("backToMenuBtn").addEventListener("click", backToMenu);
+    $("settingsBtn").addEventListener("click", openSettings);
+    $("endGameBtn").addEventListener("click", endCurrentGame);
     $("spinBtn").addEventListener("pointerdown", startSpinCharge);
     window.addEventListener("pointerup", releaseSpinCharge);
     window.addEventListener("pointercancel", cancelSpinCharge);
